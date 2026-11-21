@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  PencilLine,
   PhoneCall,
   RefreshCw,
   ScanLine,
@@ -39,6 +40,11 @@ export default function GatePassesTab({ event }) {
   const [assignBusy, setAssignBusy] = useState(false);
   const [confirm, setConfirm] = useState(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editAccount, setEditAccount] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [editError, setEditError] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -123,6 +129,40 @@ export default function GatePassesTab({ event }) {
     }
   };
 
+  const openEdit = (account) => {
+    setEditAccount(account);
+    setEditForm({
+      name: account.name || '',
+      email: account.email || '',
+      phone: account.phone || '',
+      device_label: account.device_label || '',
+    });
+    setEditError('');
+    setEditOpen(true);
+  };
+
+  const submitEdit = async (submitEvent) => {
+    submitEvent.preventDefault();
+    if (!editAccount) return;
+    setEditBusy(true);
+    setEditError('');
+    try {
+      await api.eventUshers.update(event.id, editAccount.id, {
+        name: editForm.name.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+        device_label: editForm.device_label.trim() || null,
+      });
+      toast.success('Usher updated', `${editForm.name.trim()}'s scanner details were saved.`);
+      setEditOpen(false);
+      load();
+    } catch (apiError) {
+      setEditError(apiError.message || 'Could not update the usher account.');
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
   const toggleCalling = async (account) => {
     try {
       await api.eventUshers.setCalling(event.id, account.id, !account.calling_enabled);
@@ -145,6 +185,9 @@ export default function GatePassesTab({ event }) {
       if (confirm.type === 'remove') {
         await api.eventUshers.remove(event.id, confirm.account.id);
         toast.success('Usher removed from event', `${confirm.account.name} can no longer scan this event; the account is kept.`);
+      } else if (confirm.type === 'delete') {
+        await api.eventUshers.deleteAccount(event.id, confirm.account.id);
+        toast.success('Usher account deleted', `${confirm.account.name}'s scanner account was permanently removed.`);
       } else {
         const status = confirm.type === 'suspend' ? 'suspended' : 'active';
         await api.eventUshers.setStatus(event.id, confirm.account.id, status);
@@ -260,6 +303,14 @@ export default function GatePassesTab({ event }) {
                 <div className="flex shrink-0 flex-wrap items-center gap-2 sm:ml-4">
                   <button
                     type="button"
+                    onClick={() => openEdit(account)}
+                    className="btn-secondary !px-2.5 !py-1.5 text-[10px]"
+                  >
+                    <PencilLine className="h-3.5 w-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => toggleCalling(account)}
                     className="btn-secondary !px-2.5 !py-1.5 text-[10px]"
                     title={account.calling_enabled ? 'Limit this usher to gate scanning' : 'Allow calling outcomes for allocated guests'}
@@ -289,11 +340,19 @@ export default function GatePassesTab({ event }) {
                   <button
                     type="button"
                     onClick={() => setConfirm({ type: 'remove', account })}
+                    className="btn-secondary !px-2.5 !py-1.5 text-[10px]"
+                  >
+                    Remove
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirm({ type: 'delete', account })}
                     className="btn-danger !px-2.5 !py-1.5 text-[10px]"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    Remove
-                  </button>                </div>
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -450,29 +509,117 @@ export default function GatePassesTab({ event }) {
         </form>
       </Modal>
 
+      <Modal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Edit usher account"
+        description={`Update the scanner login for "${event.title}". The password stays unchanged.`}
+        size="sm"
+        footer={
+          <>
+            <button type="button" onClick={() => setEditOpen(false)} className="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" form="usher-edit-form" className="btn-primary" disabled={editBusy}>
+              {editBusy ? 'Saving…' : 'Save changes'}
+            </button>
+          </>
+        }
+      >
+        <form id="usher-edit-form" onSubmit={submitEdit} className="space-y-4">
+          <Field label="Usher name" htmlFor="usher-edit-name" required>
+            <Input
+              id="usher-edit-name"
+              value={editForm.name}
+              onChange={(changeEvent) => setEditForm((current) => ({ ...current, name: changeEvent.target.value }))}
+              placeholder="Main Gate, VIP Gate, Chidi…"
+              required
+              maxLength={100}
+              autoFocus
+            />
+          </Field>
+          <Field
+            label="Email"
+            htmlFor="usher-edit-email"
+            hint="This becomes the sign-in e-mail on the scanner app immediately."
+            required
+          >
+            <Input
+              id="usher-edit-email"
+              type="email"
+              value={editForm.email}
+              onChange={(changeEvent) => setEditForm((current) => ({ ...current, email: changeEvent.target.value }))}
+              placeholder="usher@example.com"
+              autoComplete="off"
+              required
+            />
+          </Field>
+          <Field label="Phone number" htmlFor="usher-edit-phone" required>
+            <Input
+              id="usher-edit-phone"
+              type="tel"
+              value={editForm.phone}
+              onChange={(changeEvent) => setEditForm((current) => ({ ...current, phone: changeEvent.target.value }))}
+              placeholder="+234 801 234 5678"
+              required
+            />
+          </Field>
+          <Field
+            label="Device label"
+            htmlFor="usher-edit-device"
+            hint="Optional. Helps identify this scanner in the audit log, e.g. USHER-03."
+          >
+            <Input
+              id="usher-edit-device"
+              value={editForm.device_label}
+              onChange={(changeEvent) =>
+                setEditForm((current) => ({ ...current, device_label: changeEvent.target.value }))
+              }
+              placeholder="USHER-02"
+              maxLength={40}
+            />
+          </Field>
+          {editError ? (
+            <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
+              {editError}
+            </p>
+          ) : null}
+        </form>
+      </Modal>
+
       <ConfirmDialog
         open={Boolean(confirm)}
         onClose={() => setConfirm(null)}
         onConfirm={confirmAction}
         busy={actionBusy}
         title={
-          confirm?.type === 'remove'
-            ? 'Remove this usher from the event?'
-            : confirm?.type === 'suspend'
-              ? 'Suspend this usher?'
-              : 'Reactivate this usher?'
+          confirm?.type === 'delete'
+            ? 'Delete this usher account permanently?'
+            : confirm?.type === 'remove'
+              ? 'Remove this usher from the event?'
+              : confirm?.type === 'suspend'
+                ? 'Suspend this usher?'
+                : 'Reactivate this usher?'
         }
         description={
-          confirm?.type === 'remove'
-            ? `"${confirm?.account?.name ?? 'This usher'}" loses access to this event immediately. The reusable account and past scans are kept.`
-            : confirm?.type === 'suspend'
-              ? `"${confirm?.account?.name ?? 'This usher'}" is signed out and cannot scan this event until reactivated.`
-              : `"${confirm?.account?.name ?? 'This usher'}" can sign in to the scanner again.`
+          confirm?.type === 'delete'
+            ? `"${confirm?.account?.name ?? 'This usher'}" is permanently deleted and cannot sign in to the scanner again. Past scan logs stay, but they lose the usher link. This cannot be undone.`
+            : confirm?.type === 'remove'
+              ? `"${confirm?.account?.name ?? 'This usher'}" loses access to this event immediately. The reusable account and past scans are kept.`
+              : confirm?.type === 'suspend'
+                ? `"${confirm?.account?.name ?? 'This usher'}" is signed out and cannot scan this event until reactivated.`
+                : `"${confirm?.account?.name ?? 'This usher'}" can sign in to the scanner again.`
         }
         confirmLabel={
-          confirm?.type === 'remove' ? 'Remove from event' : confirm?.type === 'suspend' ? 'Suspend' : 'Reactivate'
+          confirm?.type === 'delete'
+            ? 'Delete account'
+            : confirm?.type === 'remove'
+              ? 'Remove from event'
+              : confirm?.type === 'suspend'
+                ? 'Suspend'
+                : 'Reactivate'
         }
-        danger={confirm?.type === 'remove'}
+        danger={confirm?.type === 'delete' || confirm?.type === 'remove'}
       />
     </div>
   );

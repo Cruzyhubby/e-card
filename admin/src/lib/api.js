@@ -202,6 +202,8 @@ export const api = {
     list: (eventId) => request(`/events/${eventId}/ushers`),
     create: (eventId, payload) => request(`/events/${eventId}/ushers`, { method: 'POST', body: payload }),
     assign: (eventId, payload) => request(`/events/${eventId}/ushers/assign`, { method: 'POST', body: payload }),
+    update: (eventId, usherId, payload) =>
+      request(`/events/${eventId}/ushers/${usherId}`, { method: 'PATCH', body: payload }),
     setCalling: (eventId, usherId, callingEnabled) =>
       request(`/events/${eventId}/ushers/${usherId}/calling`, {
         method: 'PATCH',
@@ -210,6 +212,8 @@ export const api = {
     setStatus: (eventId, usherId, status) =>
       request(`/events/${eventId}/ushers/${usherId}/status`, { method: 'PATCH', body: { status } }),
     remove: (eventId, usherId) => request(`/events/${eventId}/ushers/${usherId}`, { method: 'DELETE' }),
+    deleteAccount: (eventId, usherId) =>
+      request(`/events/${eventId}/ushers/${usherId}/account`, { method: 'DELETE' }),
   },
 
   admin: {

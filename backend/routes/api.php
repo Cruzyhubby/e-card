@@ -51,10 +51,12 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 
         Route::get('/events/{event}/ushers', [EventUsherController::class, 'index']);
         Route::post('/events/{event}/ushers', [EventUsherController::class, 'store']);
+        Route::patch('/events/{event}/ushers/{usher}', [EventUsherController::class, 'update']);
         Route::post('/events/{event}/ushers/assign', [EventUsherController::class, 'assign']);
         Route::patch('/events/{event}/ushers/{usher}/status', [EventUsherController::class, 'status']);
         Route::patch('/events/{event}/ushers/{usher}/calling', [EventUsherController::class, 'calling']);
         Route::delete('/events/{event}/ushers/{usher}', [EventUsherController::class, 'destroy']);
+        Route::delete('/events/{event}/ushers/{usher}/account', [EventUsherController::class, 'destroyAccount']);
 
         Route::get('/events/{event}/tables', [EventTableController::class, 'index']);
         Route::post('/events/{event}/tables', [EventTableController::class, 'store']);

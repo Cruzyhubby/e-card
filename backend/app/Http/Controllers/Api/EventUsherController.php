@@ -223,6 +223,48 @@ class EventUsherController extends Controller
         ]);
     }
 
+    public function update(Request $request, Event $event, User $usher): JsonResponse
+    {
+        $this->authorize('manageTeam', $event);
+        $this->ensureUsher($event, $usher);
+
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($usher->id),
+            ],
+            'phone' => ['required', 'string', 'max:32'],
+            'device_id' => ['nullable', 'string', 'max:100'],
+            'device_label' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $usher->update([
+            'name' => trim($data['name']),
+            'email' => strtolower(trim($data['email'])),
+            'phone' => trim($data['phone']),
+            'device_id' => isset($data['device_id']) ? trim($data['device_id']) : $usher->device_id,
+            'device_label' => isset($data['device_label']) ? trim($data['device_label']) : null,
+        ]);
+
+        AuditLogger::record(
+            'usher.updated',
+            'Usher account "'.$usher->name.'" was updated for event "'.$event->title.'".',
+            'Event',
+            $event->id,
+            ['usher_id' => $usher->id]
+        );
+
+        return response()->json([
+            'usher' => new UsherResource($this->decorate($usher->refresh(), $event)),
+        ]);
+    }
+
     public function status(Request $request, Event $event, User $usher): JsonResponse
     {
         $this->authorize('manageTeam', $event);
@@ -286,6 +328,35 @@ class EventUsherController extends Controller
             'Event',
             $event->id,
             ['usher_id' => $usher->id]
+        );
+
+        return response()->noContent();
+    }
+
+    /**
+     * Permanently delete the usher account. Scan logs keep their history but
+     * lose the usher link (usher_id is nulled by the foreign key).
+     */
+    public function destroyAccount(Request $request, Event $event, User $usher): Response
+    {
+        $this->authorize('manageTeam', $event);
+        $this->ensureUsher($event, $usher);
+
+        $name = $usher->name;
+        $usherId = $usher->id;
+
+        DB::transaction(function () use ($usher): void {
+            $usher->tokens()->delete();
+            $usher->usherAssignments()->delete();
+            $usher->delete();
+        });
+
+        AuditLogger::record(
+            'usher.deleted',
+            'Usher account "'.$name.'" was permanently deleted by the organizer of "'.$event->title.'".',
+            'Event',
+            $event->id,
+            ['usher_id' => $usherId]
         );
 
         return response()->noContent();
