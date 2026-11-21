@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Copy,
   PencilLine,
   PhoneCall,
   RefreshCw,
@@ -39,6 +40,7 @@ export default function GatePassesTab({ event }) {
   const [assignForm, setAssignForm] = useState(EMPTY_ASSIGN);
   const [assignError, setAssignError] = useState('');
   const [assignBusy, setAssignBusy] = useState(false);
+  const [credentialNotice, setCredentialNotice] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -110,6 +112,9 @@ export default function GatePassesTab({ event }) {
         calling_enabled: assignForm.calling_enabled,
       });
       const label = payload.usher?.device_label || payload.usher?.name || 'The gate account';
+      if (payload.credentials) {
+        setCredentialNotice({ ...payload.credentials, movedFrom: payload.moved_from });
+      }
       if (payload.moved_from) {
         toast.warning(
           'Gate account moved to this event',
@@ -455,7 +460,7 @@ export default function GatePassesTab({ event }) {
         open={assignOpen}
         onClose={() => setAssignOpen(false)}
         title="Assign an existing gate account"
-        description={`Reuse a gate account on "${event.title}". The account keeps its label, password and history.`}
+        description={`Reuse a gate account on "${event.title}". Moving an account from another event signs it out and generates a new password to share with the new operator.`}
         size="sm"
         footer={
           <>
@@ -572,6 +577,50 @@ export default function GatePassesTab({ event }) {
             </p>
           ) : null}
         </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(credentialNotice)}
+        onClose={() => setCredentialNotice(null)}
+        title="New gate credentials"
+        description={
+          credentialNotice?.movedFrom
+            ? `The account was moved from "${credentialNotice.movedFrom}" and signed out. Share the new password with the usher at this event.`
+            : 'Share these credentials with the usher.'
+        }
+        size="sm"
+        footer={
+          <button type="button" onClick={() => setCredentialNotice(null)} className="btn-primary">
+            Done
+          </button>
+        }
+      >
+        <div className="space-y-3">
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Gate label</p>
+            <p className="mt-1 font-mono text-sm text-white">{credentialNotice?.device_label || '—'}</p>
+          </div>
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Password</p>
+            <p className="mt-1 font-mono text-sm text-white">{credentialNotice?.password || '—'}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard
+                ?.writeText(`${credentialNotice?.device_label} / ${credentialNotice?.password}`)
+                .then(() => toast.success('Credentials copied', 'Share them securely with the usher.'))
+                .catch(() => toast.error('Could not copy', 'Copy the label and password manually.'));
+            }}
+            className="btn-secondary w-full"
+          >
+            <Copy className="h-4 w-4" />
+            Copy credentials
+          </button>
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            The previous password and every signed-in device stopped working immediately.
+          </p>
+        </div>
       </Modal>
 
       <ConfirmDialog

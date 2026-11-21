@@ -404,7 +404,7 @@ The label must be unique across gate accounts (case-insensitive) and the passwor
 Response `201`: `{ "usher": Usher }` with `email` and `phone` null until the first person signs in and completes their profile.
 
 ### POST `/api/events/{event}/ushers/assign` (auth — organizer owner)
-Body: `{ "device_label": "GATE-01", "calling_enabled": false }`. Reuses an existing gate account on another event; its previous active event is ended and its tokens are revoked.
+Body: `{ "device_label": "GATE-01", "calling_enabled": false }`. Reuses an existing gate account on another event; its previous active event is ended and its tokens are revoked. When the account is moved from another event the password is regenerated and returned once so the organizer can share it: `{ "usher": Usher, "moved_from": "Old event", "credentials": { "device_label": "GATE-01", "password": "…" } }` (`credentials` is `null` for a first-time assignment).
 
 ### PATCH `/api/events/{event}/ushers/{usher}` (auth — organizer owner)
 Body: `{ "device_label": "GATE-02", "password": "new-secret" }` — `password` is optional; omit it to keep the current password.

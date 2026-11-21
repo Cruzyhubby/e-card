@@ -38,7 +38,7 @@ class EventUsherController extends Controller
             ->withMax('checkInLogs as last_scan_at', 'scanned_at')
             ->orderBy('name')
             ->get()
-            ->each(function (User $usher) use ($event): void {
+            ->each(function (User $usher): void {
                 $assignment = $usher->usherAssignments->first();
                 $usher->setAttribute('calling_enabled', (bool) ($assignment?->calling_enabled ?? false));
                 $usher->setAttribute('assignment_id', $assignment?->id);
@@ -150,8 +150,9 @@ class EventUsherController extends Controller
         $movedFrom = $usher->event_id !== null && (int) $usher->event_id !== (int) $event->id
             ? Event::query()->find($usher->event_id)?->title
             : null;
+        $regeneratedPassword = null;
 
-        DB::transaction(function () use ($event, $usher, $data, $request, &$movedFrom): void {
+        DB::transaction(function () use ($event, $usher, $data, $request, &$movedFrom, &$regeneratedPassword): void {
             EventUsherAssignment::query()
                 ->where('user_id', $usher->id)
                 ->where('status', 'active')
@@ -171,6 +172,12 @@ class EventUsherController extends Controller
 
             if ((int) $usher->event_id !== (int) $event->id) {
                 $usher->tokens()->delete();
+
+                if ($usher->event_id !== null) {
+                    // Reassignment regenerates the credentials the new operator receives.
+                    $regeneratedPassword = Str::lower(Str::random(8)).random_int(10, 99);
+                    $usher->forceFill(['password' => $regeneratedPassword])->save();
+                }
             }
 
             $usher->update(['event_id' => $event->id]);
@@ -189,6 +196,10 @@ class EventUsherController extends Controller
         return response()->json([
             'usher' => new UsherResource($this->decorate($usher->refresh(), $event)),
             'moved_from' => $movedFrom,
+            'credentials' => $regeneratedPassword === null ? null : [
+                'device_label' => $usher->device_label,
+                'password' => $regeneratedPassword,
+            ],
         ]);
     }
 
