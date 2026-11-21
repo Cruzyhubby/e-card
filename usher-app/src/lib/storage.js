@@ -100,11 +100,14 @@ export async function saveSession(session) {
 
     const stored = await writeSecureToken(token);
 
-    // If the keychain write fails, keep the session usable rather than logging the usher out.
-    await AsyncStorage.setItem(
-      SESSION_KEY,
-      JSON.stringify(stored ? metadata : { ...metadata, token })
-    );
+    // Fail closed: a token that cannot reach the keychain must never be
+    // written to plain AsyncStorage, and the caller must see the failure.
+    if (!stored) {
+      await AsyncStorage.removeItem(SESSION_KEY);
+      return false;
+    }
+
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(metadata));
 
     return true;
   } catch (error) {

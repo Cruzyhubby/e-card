@@ -138,7 +138,7 @@ class OrganizerController extends Controller
         if (is_string($password) && $password !== '') {
             $organizer->forceFill([
                 'password' => $password,
-                'must_change_password' => false,
+                'must_change_password' => true,
             ])->save();
 
             $organizer->tokens()->delete();

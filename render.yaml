@@ -41,6 +41,11 @@ services:
         value: require
       - key: SESSION_DRIVER
         value: file
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
+      # Bearer tokens expire after 24 hours.
+      - key: SANCTUM_TOKEN_EXPIRATION
+        value: "1440"
       - key: CACHE_STORE
         value: file
       - key: QUEUE_CONNECTION

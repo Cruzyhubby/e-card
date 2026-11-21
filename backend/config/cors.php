@@ -19,7 +19,7 @@ return [
             // Expo web / LAN previews (private ranges only).
             '#^http://(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})(:\d+)?$#',
         ],
-    'allowed_headers' => ['*'],
+    'allowed_headers' => ['Accept', 'Authorization', 'Content-Type', 'Origin', 'X-Requested-With', 'X-XSRF-TOKEN'],
     'exposed_headers' => [],
     'max_age' => 3600,
     'supports_credentials' => false,

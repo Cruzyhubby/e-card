@@ -1,10 +1,17 @@
 <?php
 
+use App\Http\Middleware\EnsureActiveAccount;
+use App\Http\Middleware\EnsurePasswordChanged;
+use App\Http\Middleware\EnsureSuperAdmin;
+use App\Http\Middleware\ForceJsonResponse;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -15,15 +22,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Render terminates TLS and forwards the client IP; without trusting the
+        // proxy every request looks like it came from the load balancer, which
+        // would make IP rate limits global.
+        $middleware->trustProxies(at: '*');
+        $middleware->append(SecurityHeaders::class);
         $middleware->statefulApi();
-        $middleware->api(prepend: [\App\Http\Middleware\ForceJsonResponse::class]);
+        $middleware->api(prepend: [ForceJsonResponse::class]);
 
         $middleware->alias([
-            'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
-            'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
-            'account.active' => \App\Http\Middleware\EnsureActiveAccount::class,
-            'password.changed' => \App\Http\Middleware\EnsurePasswordChanged::class,
-            'super-admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'abilities' => CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
+            'account.active' => EnsureActiveAccount::class,
+            'password.changed' => EnsurePasswordChanged::class,
+            'super-admin' => EnsureSuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

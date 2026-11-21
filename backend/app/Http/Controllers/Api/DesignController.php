@@ -10,6 +10,7 @@ use App\Services\DesignService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class DesignController extends Controller
@@ -33,7 +34,12 @@ class DesignController extends Controller
         ]);
 
         $template = SharedTemplate::query()->findOrFail($data['template_id']);
-        $design = $this->designs->createFromTemplate($event, $request->user(), $template, $data['config'] ?? null);
+        $design = $this->designs->createFromTemplate(
+            $event,
+            $request->user(),
+            $template,
+            $this->validateConfig($data['config'] ?? null)
+        );
 
         return response()->json(['design' => $this->designs->payload($design)], 201);
     }
@@ -57,6 +63,8 @@ class DesignController extends Controller
             throw ValidationException::withMessages(['config' => ['The design configuration must be an object.']]);
         }
 
+        $config = $this->validateConfig($config);
+
         DesignService::assertSafe($data['file']);
         $design = $this->designs->createFromUpload($event, $request->user(), $data['file'], $config);
 
@@ -71,7 +79,11 @@ class DesignController extends Controller
             'config' => ['required', 'array'],
         ]);
 
-        $design = $this->designs->createFromConfig($event, $request->user(), $data['config']);
+        $design = $this->designs->createFromConfig(
+            $event,
+            $request->user(),
+            $this->validateConfig($data['config'])
+        );
 
         return response()->json(['design' => $this->designs->payload($design)], 201);
     }
@@ -118,5 +130,33 @@ class DesignController extends Controller
     private function assertBelongs(Event $event, DesignVersion $design): void
     {
         abort_unless((int) $design->event_id === (int) $event->id, 404);
+    }
+
+    /**
+     * Design config is promoted to the public e-card on approval, so it must
+     * pass the same allowlist and type rules as the event form.
+     */
+    private function validateConfig(?array $config): ?array
+    {
+        if ($config === null) {
+            return null;
+        }
+
+        $validator = Validator::make(['config' => $config], [
+            'config' => ['required', 'array:template,bg_color,accent_color,text_color,name_y,qr_position,qr_size'],
+            'config.template' => ['sometimes', 'string', 'in:'.implode(',', config('eclat.ecard.templates'))],
+            'config.bg_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'config.accent_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'config.text_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'config.name_y' => ['sometimes', 'integer', 'between:20,80'],
+            'config.qr_position' => ['sometimes', 'string', 'in:'.implode(',', config('eclat.ecard.qr_positions'))],
+            'config.qr_size' => ['sometimes', 'integer', 'between:88,180'],
+        ]);
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
+        }
+
+        return $validator->validated()['config'];
     }
 }

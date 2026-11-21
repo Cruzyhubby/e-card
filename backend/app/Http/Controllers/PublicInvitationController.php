@@ -10,7 +10,11 @@ class PublicInvitationController extends Controller
 {
     public function show(string $token, EcardRendererService $renderer): View
     {
-        $guest = Guest::query()->with('event')->whereQrToken($token)->firstOrFail();
+        $guest = Guest::query()
+            ->with('event')
+            ->whereQrToken($token)
+            ->where('status', '!=', 'cancelled')
+            ->firstOrFail();
         $event = $guest->event;
 
         return view('invitation', [

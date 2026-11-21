@@ -75,8 +75,9 @@ When the status turns **Live**, open:
 
 ## Step 5 — First login and security
 
-The service uses your Supabase data, including the seeded accounts, so log in with the
-organizer account you already use locally, then:
+The service uses your Supabase data, including any accounts seeded earlier, so log in with the
+organizer account you already use locally. `DemoSeeder` refuses to run when `APP_ENV=production`
+(override only with `ALLOW_DEMO_SEED=true`), so re-runs can never reset live passwords. Then:
 
 1. Change the organizer and super-admin passwords (Seeded demo passwords are publicly documented in this project's history).
 2. Settings → confirm the WhatsApp/SMS driver stays on `log` until real Kilakona credentials exist.

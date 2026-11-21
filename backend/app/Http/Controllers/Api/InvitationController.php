@@ -68,7 +68,7 @@ class InvitationController extends Controller
 
     public function show(string $token, EcardRendererService $renderer): JsonResponse
     {
-        $guest = Guest::query()->with('event')->whereQrToken($token)->firstOrFail();
+        $guest = $this->findActiveGuest($token, withEvent: true);
         $event = $guest->event->loadGuestStats();
 
         return response()->json([
@@ -81,15 +81,17 @@ class InvitationController extends Controller
 
     public function ecardSvg(Request $request, string $token, EcardRendererService $renderer): Response
     {
-        $guest = Guest::query()->with('event')->whereQrToken($token)->firstOrFail();
+        $guest = $this->findActiveGuest($token, withEvent: true);
         $event = $guest->event->loadGuestStats();
         $svg = $renderer->render($guest, $event);
 
         $headers = [
             'Content-Type' => 'image/svg+xml; charset=UTF-8',
-            'Cache-Control' => 'public, max-age=600',
+            // The token is a guest credential, so never let shared caches keep the card.
+            'Cache-Control' => 'private, max-age=0, no-store',
             'ETag' => '"'.md5($svg).'"',
             'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
         ];
 
         if ($request->boolean('download')) {
@@ -102,15 +104,24 @@ class InvitationController extends Controller
 
     public function ecardQr(string $token, EcardRendererService $renderer): Response
     {
-        $guest = Guest::query()->whereQrToken($token)->firstOrFail();
+        $guest = $this->findActiveGuest($token);
         // Distribution QR opens the guest's portal, where the card can be viewed and downloaded.
         $png = $renderer->qrPng($guest->invitation_url);
 
         return response($png, 200, [
             'Content-Type' => 'image/png',
-            'Cache-Control' => 'public, max-age=600',
+            'Cache-Control' => 'private, max-age=0, no-store',
             'ETag' => '"'.md5($png).'"',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    private function findActiveGuest(string $token, bool $withEvent = false): Guest
+    {
+        return Guest::query()
+            ->when($withEvent, fn ($query) => $query->with('event'))
+            ->whereQrToken($token)
+            ->where('status', '!=', 'cancelled')
+            ->firstOrFail();
     }
 }

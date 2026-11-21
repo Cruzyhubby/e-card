@@ -30,6 +30,7 @@ admin/.env.*.local
 # Expo
 usher-app/.expo-shared/
 *.jks
+usher-app/*.apk
 *.p8
 *.p12
 *.key

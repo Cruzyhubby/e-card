@@ -11,7 +11,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class DesignService
 {
@@ -43,13 +42,7 @@ class DesignService
             return;
         }
 
-        $content = (string) file_get_contents($file->getRealPath());
-
-        if (preg_match('/<\s*script|on[a-z]+\s*=|javascript:/i', $content) === 1) {
-            throw ValidationException::withMessages([
-                'file' => 'SVG designs may not contain scripts or event handlers.',
-            ]);
-        }
+        SvgSanitizer::assertSafe((string) file_get_contents($file->getRealPath()));
     }
 
     public function dataUri(?string $data, ?string $format): ?string

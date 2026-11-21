@@ -31,25 +31,15 @@ class CheckInController extends Controller
         $scopedEventId = $user->isUsher() ? $user->currentAssignedEventId() : null;
         $deviceId = $data['device_id'] ?? $user->device_id ?? 'USHER-APP';
         $ipAddress = $request->ip();
-        $fallbackEventId = $user->isUsher() ? $scopedEventId : ($data['event_id'] ?? null);
 
-        if ($user->isOrganizer() && $fallbackEventId !== null) {
-            $ownsEvent = Event::query()
-                ->whereKey($fallbackEventId)
-                ->where('user_id', $user->id)
-                ->exists();
-
-            abort_unless($ownsEvent, 403, 'You can only verify passes for your own events.');
-        }
-
-        $outcome = DB::transaction(function () use ($token, $user, $deviceId, $ipAddress, $fallbackEventId, $scopedEventId): array {
+        $outcome = DB::transaction(function () use ($token, $user, $deviceId, $ipAddress, $scopedEventId): array {
             $guest = Guest::query()
                 ->whereQrToken($token)
                 ->lockForUpdate()
                 ->first();
 
             if ($guest === null) {
-                $this->writeLog(null, null, $user?->id, $deviceId, $token, 'denied', $ipAddress, $fallbackEventId);
+                $this->writeLog(null, null, $user?->id, $deviceId, $token, 'denied', $ipAddress, $scopedEventId);
 
                 return [
                     'status' => 'DENIED',
@@ -78,7 +68,8 @@ class CheckInController extends Controller
             }
 
             if ($user->isOrganizer() && (int) $event->user_id !== (int) $user->id) {
-                $this->writeLog(null, null, $user->id, $deviceId, $token, 'denied', $ipAddress, $fallbackEventId);
+                // Never attach another organizer's guest event to this log row.
+                $this->writeLog(null, null, $user->id, $deviceId, $token, 'denied', $ipAddress);
 
                 return [
                     'status' => 'DENIED',
@@ -232,11 +223,17 @@ class CheckInController extends Controller
             'guest_id' => $guest?->id,
             'usher_id' => $usherId,
             'device_id' => $deviceId,
-            'token_attempted' => mb_substr($token, 0, 100),
+            // A scanned token is a guest credential: keep the guest link, never the raw secret.
+            'token_attempted' => $guest !== null ? null : $this->maskToken($token),
             'validation_status' => $validationStatus,
             'scanned_at' => now(),
             'ip_address' => $ipAddress,
         ]);
+    }
+
+    private function maskToken(string $token): string
+    {
+        return mb_strlen($token) > 8 ? mb_substr($token, 0, 8).'…' : $token;
     }
 
     private function normalizeToken(string $rawToken): string

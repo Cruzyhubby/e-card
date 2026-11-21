@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -23,9 +24,7 @@ class PasswordResetController extends Controller
 {
     private const CODE_TTL_MINUTES = 15;
 
-    public function __construct(private readonly PlatformSettings $settings)
-    {
-    }
+    public function __construct(private readonly PlatformSettings $settings) {}
 
     public function request(Request $request): JsonResponse
     {
@@ -70,6 +69,14 @@ class PasswordResetController extends Controller
         ]);
 
         $email = Str::lower(trim($data['email']));
+        $attemptKey = 'password-reset:'.$email.'|'.$request->ip();
+
+        if (RateLimiter::tooManyAttempts($attemptKey, 10)) {
+            throw ValidationException::withMessages([
+                'code' => ['Too many attempts. Request a new code and try again in a few minutes.'],
+            ]);
+        }
+
         $record = DB::table('password_reset_tokens')->where('email', $email)->first();
         $user = User::query()->where('email', $email)->first();
 
@@ -81,10 +88,14 @@ class PasswordResetController extends Controller
         $matches = $isRecent && $isAllowedRole && Hash::check($data['code'], (string) $record->token);
 
         if (! $matches) {
+            RateLimiter::hit($attemptKey, self::CODE_TTL_MINUTES * 60);
+
             throw ValidationException::withMessages([
                 'code' => ['This reset code is invalid or has expired.'],
             ]);
         }
+
+        RateLimiter::clear($attemptKey);
 
         $user->forceFill([
             'password' => $data['password'],

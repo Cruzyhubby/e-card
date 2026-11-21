@@ -3,11 +3,16 @@
 namespace App\Services;
 
 use App\Models\Event;
+use App\Models\Guest;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class GuestExportService
 {
@@ -44,7 +49,7 @@ class GuestExportService
             ->orderBy('id')
             ->get();
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Guests');
 
@@ -65,14 +70,12 @@ class GuestExportService
             $guest->invitation_url,
         ])->all();
 
-        if ($rows !== []) {
-            $sheet->fromArray($rows, null, 'A2');
-        }
+        $this->writeRows($sheet, $rows, 2);
 
         $lastRow = max(1, count($rows) + 1);
         $sheet->freezePane('A2');
         $sheet->setAutoFilter("A1:L{$lastRow}");
-        $sheet->getStyle("A1:L1")->applyFromArray([
+        $sheet->getStyle('A1:L1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '111827']],
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
@@ -108,7 +111,7 @@ class GuestExportService
 
     public function template(): Spreadsheet
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Guests');
 
@@ -171,7 +174,7 @@ class GuestExportService
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, \App\Models\Guest>  $guests
+     * @param  Collection<int, Guest>  $guests
      * @param  array<string, mixed>  $filters
      */
     private function addSummarySheet(Spreadsheet $spreadsheet, Event $event, $guests, array $filters): void
@@ -186,7 +189,7 @@ class GuestExportService
         $checkedIn = $guests->where('status', 'checked_in')->count();
         $tables = $guests->pluck('table_number')->filter()->unique()->count();
 
-        $sheet->fromArray([
+        $this->writeRows($sheet, [
             ['Event', $event->title],
             ['Date', $event->event_date?->format('Y-m-d H:i')],
             ['Venue', $event->venue],
@@ -201,7 +204,7 @@ class GuestExportService
             ['Awaiting RSVP', $awaiting],
             ['Checked in', $checkedIn],
             ['Tables represented', $tables],
-        ], null, 'A1');
+        ], 1);
 
         $sheet->getStyle('A1:A5')->getFont()->setBold(true);
         $sheet->getStyle('A7:B7')->applyFromArray([
@@ -233,6 +236,31 @@ class GuestExportService
         }
 
         return $parts === [] ? 'All guests' : implode(' · ', $parts);
+    }
+
+    /**
+     * Writes every string as a literal text cell so guest-supplied values
+     * such as "=HYPERLINK(...)" can never become a spreadsheet formula.
+     *
+     * @param  array<int, array<int, mixed>>  $rows
+     */
+    private function writeRows(Worksheet $sheet, array $rows, int $startRow): void
+    {
+        foreach ($rows as $rowIndex => $row) {
+            foreach (array_values($row) as $columnIndex => $value) {
+                if ($value === null) {
+                    continue;
+                }
+
+                $coordinate = Coordinate::stringFromColumnIndex($columnIndex + 1).($startRow + $rowIndex);
+
+                if (is_int($value) || is_float($value)) {
+                    $sheet->setCellValueExplicit($coordinate, $value, DataType::TYPE_NUMERIC);
+                } else {
+                    $sheet->setCellValueExplicit($coordinate, (string) $value, DataType::TYPE_STRING);
+                }
+            }
+        }
     }
 
     private function label(string $configKey, ?string $value): string

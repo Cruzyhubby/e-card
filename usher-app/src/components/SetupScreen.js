@@ -335,7 +335,13 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
       event,
     };
 
-    await saveSession(next);
+    const stored = await saveSession(next);
+
+    if (!stored) {
+      setError('Could not save your session securely on this device. Try signing in again.');
+      return;
+    }
+
     onStart(next);
   }, [token, event, baseUrl, deviceId, user, onStart]);
 

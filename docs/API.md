@@ -122,11 +122,11 @@ Constraints: `bg_color`, `accent_color`, `text_color` are hex `#RRGGBB`; `name_y
   "usher_name": "Gate 01",
   "device_id": "USHER-01",
   "validation_status": "valid",
-  "token_attempted": "2b0f3f0e-...",
+  "token_attempted": null,
   "scanned_at": "2026-11-08T18:42:00+01:00"
 }
 ```
-`validation_status` is `valid`, `already_checked_in`, or `denied`. `guest_name`/`table_number` may be `null` when the token is unknown.
+`validation_status` is `valid`, `already_checked_in`, or `denied`. `guest_name`/`table_number` may be `null` when the token is unknown. Raw scan tokens are never stored: identified passes keep only `guest_id`, and unknown tokens are kept as a short masked prefix for security review.
 
 ## Public
 
@@ -362,9 +362,9 @@ Serves the uploaded artwork inline for the review page. Studio-config-only versi
 
 ### POST `/api/check-in/verify` (auth — organizer or usher)
 ```json
-{ "token": "2b0f3f0e-...", "device_id": "USHER-01", "event_id": 1 }
+{ "token": "2b0f3f0e-...", "device_id": "USHER-01" }
 ```
-`event_id` is optional and only used by organizers scanning directly from the admin (it must be an event they own). A usher's event is taken from their account binding and cannot be overridden: a QR belonging to another event returns `DENIED` with “This pass belongs to a different event.” Super admins receive `403`.
+The event is always derived from the scanned guest and the caller's account: organizers may only verify guests of their own events, a usher's event comes from their account binding and cannot be overridden, and a QR belonging to another event returns `DENIED` with “This pass belongs to a different event.” Super admins receive `403`.
 Response `200` (validation outcome, never an exception for a bad token):
 ```json
 {

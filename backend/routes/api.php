@@ -30,10 +30,10 @@ Route::post('/auth/login', [AuthController::class, 'login'])->middleware('thrott
 Route::post('/auth/forgot-password', [PasswordResetController::class, 'request'])->middleware('throttle:6,1');
 Route::post('/auth/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
 
-Route::get('/invitations/{token}', [InvitationController::class, 'show']);
+Route::get('/invitations/{token}', [InvitationController::class, 'show'])->middleware('throttle:60,1');
 Route::post('/invitations/{token}/rsvp', [InvitationController::class, 'rsvp'])->middleware('throttle:30,1');
-Route::get('/invitations/{token}/ecard.svg', [InvitationController::class, 'ecardSvg']);
-Route::get('/invitations/{token}/qr.png', [InvitationController::class, 'ecardQr']);
+Route::get('/invitations/{token}/ecard.svg', [InvitationController::class, 'ecardSvg'])->middleware('throttle:60,1');
+Route::get('/invitations/{token}/qr.png', [InvitationController::class, 'ecardQr'])->middleware('throttle:60,1');
 
 Route::get('/design-previews/{token}', [DesignApprovalController::class, 'show'])->middleware('throttle:60,1');
 Route::post('/design-previews/{token}', [DesignApprovalController::class, 'decide'])->middleware('throttle:20,1');

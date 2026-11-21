@@ -47,6 +47,14 @@ class DemoSeeder extends Seeder
 
     public function run(): void
     {
+        // Demo accounts share one public password; never create or reset them
+        // on a production database unless an operator explicitly opts in.
+        if (app()->environment('production') && ! filter_var(env('ALLOW_DEMO_SEED', false), FILTER_VALIDATE_BOOLEAN)) {
+            $this->command?->warn('DemoSeeder skipped: demo accounts are disabled in production.');
+
+            return;
+        }
+
         $organizer = User::query()->updateOrCreate(
             ['email' => 'organizer@eclat.app'],
             [

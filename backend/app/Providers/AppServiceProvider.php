@@ -17,14 +17,18 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        RateLimiter::for('login', function (Request $request): Limit {
-            $key = Str::lower((string) $request->input('email')).'|'.$request->ip();
+        RateLimiter::for('login', function (Request $request): array {
+            $response = fn () => response()->json([
+                'message' => 'Too many login attempts. Please try again later.',
+            ], 429);
 
-            return Limit::perMinute(5)
-                ->by($key)
-                ->response(fn () => response()->json([
-                    'message' => 'Too many login attempts. Please try again later.',
-                ], 429));
+            $identifier = Str::lower(trim((string) ($request->input('login') ?? $request->input('email'))));
+
+            return [
+                Limit::perMinute(5)->by($identifier.'|'.$request->ip())->response($response),
+                // Stops credential stuffing across many accounts from one address.
+                Limit::perMinute(20)->by($request->ip())->response($response),
+            ];
         });
     }
 }

@@ -19,7 +19,6 @@ class VerifyTokenRequest extends FormRequest
         return [
             'token' => ['required', 'string', 'max:255'],
             'device_id' => ['sometimes', 'nullable', 'string', 'max:100'],
-            'event_id' => ['sometimes', 'nullable', 'integer', 'exists:events,id'],
         ];
     }
 }
