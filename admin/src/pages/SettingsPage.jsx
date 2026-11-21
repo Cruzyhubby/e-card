@@ -337,9 +337,9 @@ npx expo start`}</CodeBlock>
                 </p>
                 <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
                   Deployed builds bake in <span className="font-mono text-slate-400">EXPO_PUBLIC_API_URL</span> (for
-                  example your HTTPS API domain) so no discovery is needed. Usher accounts are created per event from
-                  the <span className="font-mono text-slate-400">Gate &amp; ushers</span> tab; the first password is the
-                  phone number digits, and they choose a new password at first sign-in.
+                  example your HTTPS API domain) so no discovery is needed. Gate accounts are created per event from
+                  the <span className="font-mono text-slate-400">Gate &amp; ushers</span> tab with just a label and a
+                  password; each usher adds their own names, phone and e-mail at sign-in.
                 </p>
               </div>
             </div>

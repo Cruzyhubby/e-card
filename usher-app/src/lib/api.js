@@ -234,10 +234,10 @@ export function createApi({ baseUrl, token = null, timeoutMs = REQUEST_TIMEOUT_M
       authToken = value || null;
     },
 
-    async login(email, password) {
+    async login(identifier, password) {
       const data = await request('/auth/login', {
         method: 'POST',
-        body: { email, password },
+        body: { login: identifier, password },
       });
       if (!data || !data.token || !data.user) {
         throw new ApiError('Unexpected sign-in response from server.', 0, data);
@@ -266,6 +266,17 @@ export function createApi({ baseUrl, token = null, timeoutMs = REQUEST_TIMEOUT_M
       } finally {
         authToken = null;
       }
+    },
+
+    async updateProfile(payload) {
+      const data = await request('/auth/profile', {
+        method: 'POST',
+        body: payload,
+      });
+      if (!data || !data.user) {
+        throw new ApiError('Unexpected profile response from server.', 0, data);
+      }
+      return data;
     },
 
     async changePassword(currentPassword, password, confirmation) {

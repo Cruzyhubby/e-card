@@ -58,37 +58,32 @@ class EventUsherController extends Controller
     {
         $this->authorize('manageTeam', $event);
 
-        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
-
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:32'],
-            'device_id' => ['nullable', 'string', 'max:100'],
-            'device_label' => ['nullable', 'string', 'max:40'],
+            'device_label' => [
+                'required',
+                'string',
+                'max:40',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $this->ensureLabelAvailable((string) $value, null, $fail);
+                },
+            ],
+            'password' => ['required', 'string', 'min:6', 'max:255'],
             'calling_enabled' => ['sometimes', 'boolean'],
         ]);
 
-        $initialPassword = preg_replace('/\D+/', '', $data['phone']);
+        $usher = DB::transaction(function () use ($data, $event, $request): User {
+            $label = trim($data['device_label']);
 
-        if (strlen($initialPassword) < 7) {
-            throw ValidationException::withMessages([
-                'phone' => 'Enter a phone number with at least 7 digits; it becomes the initial password.',
-            ]);
-        }
-
-        $usher = DB::transaction(function () use ($data, $event, $initialPassword, $request): User {
             $usher = User::query()->create([
-                'name' => trim($data['name']),
-                'email' => strtolower(trim($data['email'])),
-                'password' => $initialPassword,
-                'must_change_password' => true,
+                'name' => $label,
+                'email' => null,
+                'password' => $data['password'],
+                'must_change_password' => false,
                 'role' => 'usher',
                 'status' => 'active',
-                'phone' => trim($data['phone']),
+                'phone' => null,
                 'event_id' => $event->id,
-                'device_id' => isset($data['device_id']) ? trim($data['device_id']) : null,
-                'device_label' => isset($data['device_label']) ? trim($data['device_label']) : null,
+                'device_label' => $label,
             ]);
 
             EventUsherAssignment::query()->create([
@@ -105,7 +100,7 @@ class EventUsherController extends Controller
 
         AuditLogger::record(
             'usher.created',
-            'Usher account "'.$usher->name.'" was created for event "'.$event->title.'" with a first-login password change required.',
+            'Gate account "'.$usher->device_label.'" was created for event "'.$event->title.'".',
             'Event',
             $event->id,
             ['usher_id' => $usher->id]
@@ -117,30 +112,33 @@ class EventUsherController extends Controller
     }
 
     /**
-     * Reuse an existing usher account on another event. The account keeps its
-     * credentials and history; access to the previous event is ended.
+     * Reuse an existing gate account on another event. The account keeps its
+     * label, password and history; access to the previous event is ended.
      */
     public function assign(Request $request, Event $event): JsonResponse
     {
         $this->authorize('manageTeam', $event);
 
         $data = $request->validate([
-            'email' => ['required', 'string', 'email', 'max:255'],
+            'device_label' => ['required', 'string', 'max:40'],
             'calling_enabled' => ['sometimes', 'boolean'],
         ]);
 
-        $email = Str::lower(trim($data['email']));
-        $usher = User::query()->where('role', 'usher')->where('email', $email)->first();
+        $label = Str::lower(trim($data['device_label']));
+        $usher = User::query()
+            ->where('role', 'usher')
+            ->whereRaw('lower(device_label) = ?', [$label])
+            ->first();
 
         if ($usher === null) {
             throw ValidationException::withMessages([
-                'email' => ['No usher account uses this email. Create the account first, then reuse it across events.'],
+                'device_label' => ['No gate account uses this label. Create it first, then reuse it across events.'],
             ]);
         }
 
         if (! $usher->isActive()) {
             throw ValidationException::withMessages([
-                'email' => ['This usher account is suspended. Reactivate it before assigning an event.'],
+                'device_label' => ['This gate account is suspended. Reactivate it before assigning an event.'],
             ]);
         }
 
@@ -228,29 +226,33 @@ class EventUsherController extends Controller
         $this->authorize('manageTeam', $event);
         $this->ensureUsher($event, $usher);
 
-        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
-
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'email' => [
+            'device_label' => [
                 'required',
                 'string',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($usher->id),
+                'max:40',
+                function (string $attribute, mixed $value, \Closure $fail) use ($usher): void {
+                    $this->ensureLabelAvailable((string) $value, $usher, $fail);
+                },
             ],
-            'phone' => ['required', 'string', 'max:32'],
-            'device_id' => ['nullable', 'string', 'max:100'],
-            'device_label' => ['nullable', 'string', 'max:40'],
+            'password' => ['nullable', 'string', 'min:6', 'max:255'],
         ]);
 
-        $usher->update([
-            'name' => trim($data['name']),
-            'email' => strtolower(trim($data['email'])),
-            'phone' => trim($data['phone']),
-            'device_id' => isset($data['device_id']) ? trim($data['device_id']) : $usher->device_id,
-            'device_label' => isset($data['device_label']) ? trim($data['device_label']) : null,
-        ]);
+        $label = trim($data['device_label']);
+        $payload = ['device_label' => $label];
+
+        // Until the person signs in and enters their own details the account is
+        // identified by its gate label.
+        if ($usher->email === null) {
+            $payload['name'] = $label;
+        }
+
+        if (! empty($data['password'])) {
+            $payload['password'] = $data['password'];
+            $payload['must_change_password'] = false;
+        }
+
+        $usher->update($payload);
 
         AuditLogger::record(
             'usher.updated',
@@ -360,6 +362,21 @@ class EventUsherController extends Controller
         );
 
         return response()->noContent();
+    }
+
+    private function ensureLabelAvailable(string $label, ?User $ignore, \Closure $fail): void
+    {
+        $query = User::query()
+            ->where('role', 'usher')
+            ->whereRaw('lower(device_label) = ?', [Str::lower(trim($label))]);
+
+        if ($ignore !== null) {
+            $query->whereKeyNot($ignore->id);
+        }
+
+        if ($query->exists()) {
+            $fail('Another usher account already uses this gate label.');
+        }
     }
 
     private function ensureUsher(Event $event, User $usher): void

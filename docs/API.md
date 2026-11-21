@@ -315,25 +315,34 @@ Response `200`:
 ```
 Totals cover only the authenticated usher's own scans, so each gate sees its own throughput. `recent` is the latest 10 scans at that gate. Organizers and super admins receive `403`.
 
-## Usher accounts (organizer)
+## Gate accounts (organizer)
 
-Created from **Event Studio → Gate & ushers**. An usher is a real user account (`role: usher`) bound to one event. It is provisioned the same way the platform admin provisions organizers: no password in the request, the digit-only phone number becomes the initial password, and `must_change_password` forces a change at first sign-in. The usher then signs in to the scanner app with email and password — no gate tokens are ever issued.
+Created from **Event Studio → Gate & ushers**. A gate account is a real user account (`role: usher`) bound to one event, provisioned with only a **gate label** and a **password**. Any person at that gate signs in with the shared label/password and must then complete `POST /api/auth/profile` with their own full names (three names), phone number and e-mail before scanning. No gate tokens are ever issued.
 
 ### GET `/api/events/{event}/ushers` (auth — organizer owner)
 Response `200`: `{ "data": [ Usher, ... ], "stats": { "total": 2, "active": 2, "scans": 31 } }`
 Each usher includes `scan_count` and `last_scan_at`.
 
 ### POST `/api/events/{event}/ushers` (auth — organizer owner)
-Body: `{ "name": "Main Gate", "email": "gate@example.com", "phone": "+234 801 555 0123", "device_id": "USHER-01" }` (`device_id` optional).
-`email` must be unique and `phone` must contain at least 7 digits, because the digits become the initial password.
-Response `201`: `{ "usher": Usher }` — `must_change_password` is `true`. No token is returned; share the email and temporary password with the usher.
+Body: `{ "device_label": "GATE-01", "password": "gate-2026", "calling_enabled": false }`.
+The label must be unique across gate accounts (case-insensitive) and the password must be at least 6 characters. `calling_enabled` is optional.
+Response `201`: `{ "usher": Usher }` with `email` and `phone` null until the first person signs in and completes their profile.
+
+### POST `/api/events/{event}/ushers/assign` (auth — organizer owner)
+Body: `{ "device_label": "GATE-01", "calling_enabled": false }`. Reuses an existing gate account on another event; its previous active event is ended and its tokens are revoked.
+
+### PATCH `/api/events/{event}/ushers/{usher}` (auth — organizer owner)
+Body: `{ "device_label": "GATE-02", "password": "new-secret" }` — `password` is optional; omit it to keep the current password.
+
+### DELETE `/api/events/{event}/ushers/{usher}/account` (auth — organizer owner)
+Permanently deletes the gate account and its tokens. Scan logs keep their rows with a `null` usher. Response `204`.
 
 ### PATCH `/api/events/{event}/ushers/{usher}/status` (auth — organizer owner)
 Body: `{ "status": "active" | "suspended" }`. Response `200`: `{ "usher": Usher }`.
 Suspending revokes the usher's sessions immediately, so the scanner app can no longer scan until reactivated.
 
 ### DELETE `/api/events/{event}/ushers/{usher}` (auth — organizer owner)
-Deletes the account and all of its tokens. Existing scan logs keep their historical row with a `null` usher. Response `204`.
+Ends this event's assignment only; the reusable gate account and its scan/calling history stay intact. Response `204`.
 
 ## Platform administration (super admin)
 

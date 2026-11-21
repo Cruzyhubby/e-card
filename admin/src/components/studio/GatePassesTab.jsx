@@ -21,8 +21,9 @@ import { useToast } from '../../context/ToastContext';
 import { api } from '../../lib/api';
 import { cn, formatDateTime, timeAgo } from '../../lib/utils';
 
-const EMPTY_FORM = { name: '', email: '', phone: '', device_label: '', calling_enabled: false };
-const EMPTY_ASSIGN = { email: '', calling_enabled: false };
+const EMPTY_FORM = { device_label: '', password: '', calling_enabled: false };
+const EMPTY_EDIT = { device_label: '', password: '' };
+const EMPTY_ASSIGN = { device_label: '', calling_enabled: false };
 
 export default function GatePassesTab({ event }) {
   const toast = useToast();
@@ -42,7 +43,7 @@ export default function GatePassesTab({ event }) {
   const [actionBusy, setActionBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editAccount, setEditAccount] = useState(null);
-  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [editForm, setEditForm] = useState(EMPTY_EDIT);
   const [editError, setEditError] = useState('');
   const [editBusy, setEditBusy] = useState(false);
 
@@ -54,7 +55,7 @@ export default function GatePassesTab({ event }) {
       setStats(payload.stats);
       setError('');
     } catch (apiError) {
-      setError(apiError.message || 'Unable to load usher accounts.');
+      setError(apiError.message || 'Unable to load gate accounts.');
     } finally {
       setLoading(false);
     }
@@ -75,22 +76,19 @@ export default function GatePassesTab({ event }) {
     setBusy(true);
     setFieldError('');
     try {
-      const initialPassword = form.phone.replace(/\D+/g, '');
       await api.eventUshers.create(event.id, {
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim(),
-        device_label: form.device_label.trim() || null,
+        device_label: form.device_label.trim(),
+        password: form.password,
         calling_enabled: form.calling_enabled,
       });
       toast.success(
-        'Usher account created',
-        `${form.name.trim()} signs in with ${form.email.trim()} and the temporary password ${initialPassword}.`,
+        'Gate account created',
+        `Share the label "${form.device_label.trim()}" and the password with the usher. They add their own details at first sign-in.`,
       );
       setCreateOpen(false);
       load();
     } catch (apiError) {
-      setFieldError(apiError.message || 'Could not create the usher account.');
+      setFieldError(apiError.message || 'Could not create the gate account.');
     } finally {
       setBusy(false);
     }
@@ -108,22 +106,22 @@ export default function GatePassesTab({ event }) {
     setAssignError('');
     try {
       const payload = await api.eventUshers.assign(event.id, {
-        email: assignForm.email.trim(),
+        device_label: assignForm.device_label.trim(),
         calling_enabled: assignForm.calling_enabled,
       });
-      const name = payload.usher?.name || 'The usher';
+      const label = payload.usher?.device_label || payload.usher?.name || 'The gate account';
       if (payload.moved_from) {
         toast.warning(
-          'Usher moved to this event',
-          `${name} was assigned here and removed from "${payload.moved_from}".`,
+          'Gate account moved to this event',
+          `"${label}" was assigned here and removed from "${payload.moved_from}".`,
         );
       } else {
-        toast.success('Usher assigned', `${name} can now scan ${event.title}.`);
+        toast.success('Gate account assigned', `"${label}" can now scan ${event.title}.`);
       }
       setAssignOpen(false);
       load();
     } catch (apiError) {
-      setAssignError(apiError.message || 'Could not assign this usher.');
+      setAssignError(apiError.message || 'Could not assign this gate account.');
     } finally {
       setAssignBusy(false);
     }
@@ -132,10 +130,8 @@ export default function GatePassesTab({ event }) {
   const openEdit = (account) => {
     setEditAccount(account);
     setEditForm({
-      name: account.name || '',
-      email: account.email || '',
-      phone: account.phone || '',
       device_label: account.device_label || '',
+      password: '',
     });
     setEditError('');
     setEditOpen(true);
@@ -147,21 +143,27 @@ export default function GatePassesTab({ event }) {
     setEditBusy(true);
     setEditError('');
     try {
-      await api.eventUshers.update(event.id, editAccount.id, {
-        name: editForm.name.trim(),
-        email: editForm.email.trim(),
-        phone: editForm.phone.trim(),
-        device_label: editForm.device_label.trim() || null,
-      });
-      toast.success('Usher updated', `${editForm.name.trim()}'s scanner details were saved.`);
+      const payload = {
+        device_label: editForm.device_label.trim(),
+      };
+      if (editForm.password) payload.password = editForm.password;
+      await api.eventUshers.update(event.id, editAccount.id, payload);
+      toast.success(
+        'Gate account updated',
+        editForm.password
+          ? `"${payload.device_label}" was saved with a new password.`
+          : `"${payload.device_label}" was saved.`,
+      );
       setEditOpen(false);
       load();
     } catch (apiError) {
-      setEditError(apiError.message || 'Could not update the usher account.');
+      setEditError(apiError.message || 'Could not update the gate account.');
     } finally {
       setEditBusy(false);
     }
   };
+
+  const labelOf = (account) => account.device_label || account.device_id || account.name || 'This account';
 
   const toggleCalling = async (account) => {
     try {
@@ -169,8 +171,8 @@ export default function GatePassesTab({ event }) {
       toast.success(
         !account.calling_enabled ? 'Calling enabled' : 'Calling disabled',
         !account.calling_enabled
-          ? `${account.name} can take allocated guests through calling outcomes.`
-          : `${account.name} is limited to gate scanning.`,
+          ? `${labelOf(account)} can take allocated guests through calling outcomes.`
+          : `${labelOf(account)} is limited to gate scanning.`,
       );
       load();
     } catch (apiError) {
@@ -184,18 +186,18 @@ export default function GatePassesTab({ event }) {
     try {
       if (confirm.type === 'remove') {
         await api.eventUshers.remove(event.id, confirm.account.id);
-        toast.success('Usher removed from event', `${confirm.account.name} can no longer scan this event; the account is kept.`);
+        toast.success('Gate account removed from event', `${labelOf(confirm.account)} can no longer scan this event; the account is kept.`);
       } else if (confirm.type === 'delete') {
         await api.eventUshers.deleteAccount(event.id, confirm.account.id);
-        toast.success('Usher account deleted', `${confirm.account.name}'s scanner account was permanently removed.`);
+        toast.success('Gate account deleted', `${labelOf(confirm.account)} was permanently removed.`);
       } else {
         const status = confirm.type === 'suspend' ? 'suspended' : 'active';
         await api.eventUshers.setStatus(event.id, confirm.account.id, status);
         toast.success(
-          status === 'suspended' ? 'Usher suspended' : 'Usher reactivated',
+          status === 'suspended' ? 'Gate account suspended' : 'Gate account reactivated',
           status === 'suspended'
-            ? `${confirm.account.name} cannot sign in until reactivated.`
-            : `${confirm.account.name} can sign in again.`,
+            ? `${labelOf(confirm.account)} cannot sign in until reactivated.`
+            : `${labelOf(confirm.account)} can sign in again.`,
         );
       }
       setConfirm(null);
@@ -215,10 +217,10 @@ export default function GatePassesTab({ event }) {
             <Users className="h-5 w-5" />
           </span>
           <div>
-            <h2 className="text-sm font-bold text-white">Usher accounts for this event</h2>
+            <h2 className="text-sm font-bold text-white">Gate accounts for this event</h2>
             <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-slate-500">
-              Create a scanner login for each usher. They sign in to the Éclat Gate app with this email and password,
-              and can only scan <span className="text-slate-300">{event.title}</span>.
+              Create a gate login with a label and password. Ushers sign in to the Éclat Gate app, add their own
+              details, and can only scan <span className="text-slate-300">{event.title}</span>.
             </p>
           </div>
         </div>
@@ -229,7 +231,7 @@ export default function GatePassesTab({ event }) {
           </button>
           <button type="button" onClick={openCreate} className="btn-primary">
             <UserPlus className="h-4 w-4" />
-            New usher account
+            New gate account
           </button>
         </div>
       </div>
@@ -264,14 +266,14 @@ export default function GatePassesTab({ event }) {
 
       <div className="panel overflow-hidden">
         <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3.5">
-          <p className="text-xs font-bold text-white">Usher accounts</p>
-          <button type="button" onClick={load} className="icon-btn" aria-label="Refresh usher accounts">
+          <p className="text-xs font-bold text-white">Gate accounts</p>
+          <button type="button" onClick={load} className="icon-btn" aria-label="Refresh gate accounts">
             <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
           </button>
         </div>
 
         {loading && !accounts.length ? (
-          <div className="px-5 py-12 text-center text-xs text-slate-500">Loading usher accounts…</div>
+          <div className="px-5 py-12 text-center text-xs text-slate-500">Loading gate accounts…</div>
         ) : accounts.length ? (
           <div className="divide-y divide-white/[0.04]">
             {accounts.map((account) => (
@@ -281,18 +283,21 @@ export default function GatePassesTab({ event }) {
                     <Smartphone className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-xs font-semibold text-slate-200">{account.name}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="truncate text-xs font-semibold text-slate-200">
+                        {account.device_label || account.device_id || 'Gate account'}
+                      </p>
                       <Badge tone={account.status === 'active' ? 'emerald' : 'rose'} dot>
                         {account.status}
                       </Badge>
                       {account.calling_enabled ? <Badge tone="sky">Calling</Badge> : null}
-                      {account.must_change_password ? <Badge tone="violet">First login</Badge> : null}
+                      {account.email ? null : <Badge tone="violet">Details pending</Badge>}
                     </div>
-                    <p className="mt-0.5 truncate text-[10px] text-slate-500">{account.email || 'No email on file'}</p>
                     <p className="mt-0.5 truncate text-[10px] text-slate-500">
-                      {account.phone || 'No phone'} · {account.device_label || account.device_id || 'Device not labelled'} ·{' '}
-                      {account.scan_count} scans
+                      {account.email ? `${account.name} · ${account.email}` : 'Usher has not added their details yet'}
+                    </p>
+                    <p className="mt-0.5 truncate text-[10px] text-slate-500">
+                      {account.phone || 'No phone'} · {account.scan_count} scans
                       {account.last_scan_at ? ` · last ${timeAgo(account.last_scan_at)}` : ' · never used'}
                     </p>
                     <p className="mt-0.5 text-[10px] text-slate-600">
@@ -359,12 +364,12 @@ export default function GatePassesTab({ event }) {
         ) : (
           <EmptyState
             icon={Users}
-            title="No usher accounts yet"
-            description="Create an account for each usher, or reuse an existing scanner account across events."
+            title="No gate accounts yet"
+            description="Create a gate label and password for each entrance, or reuse an existing gate account across events."
             action={
               <button type="button" onClick={openCreate} className="btn-primary">
                 <UserPlus className="h-4 w-4" />
-                New usher account
+                New gate account
               </button>
             }
           />
@@ -373,16 +378,17 @@ export default function GatePassesTab({ event }) {
 
       <p className="flex items-start gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.015] px-4 py-3.5 text-[11px] leading-relaxed text-slate-500">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-300" />
-        Ushers sign in with email and password — no pass tokens. Accounts are reusable across events; assigning one
-        here ends its previous active event. The first password is the phone number digits and must be changed at first
-        sign-in. Suspending an account ends its active sessions immediately.
+        Gate accounts are just a label and a password — no e-mails or temporary passwords to manage. The person who
+        signs in adds their full name, phone number and e-mail before scanning, so every scan is traceable. Accounts
+        can be reused across events; assigning one here ends its previous active event. Suspending an account ends its
+        active sessions immediately.
       </p>
 
       <Modal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        title="New usher account"
-        description={`Create the scanner login for "${event.title}". The account starts with the phone number as its temporary password.`}
+        title="New gate account"
+        description={`Create a gate login for "${event.title}". Share the label and password with the usher.`}
         size="sm"
         footer={
           <>
@@ -396,61 +402,46 @@ export default function GatePassesTab({ event }) {
         }
       >
         <form id="usher-account-form" onSubmit={submitCreate} className="space-y-4">
-          <Field label="Usher name" htmlFor="usher-name" required>
-            <Input
-              id="usher-name"
-              value={form.name}
-              onChange={(changeEvent) => setForm((current) => ({ ...current, name: changeEvent.target.value }))}
-              placeholder="Main Gate, VIP Gate, Chidi…"
-              required
-              maxLength={100}
-              autoFocus
-            />
-          </Field>
-          <Field label="Email" htmlFor="usher-email" required>
-            <Input
-              id="usher-email"
-              type="email"
-              value={form.email}
-              onChange={(changeEvent) => setForm((current) => ({ ...current, email: changeEvent.target.value }))}
-              placeholder="usher@example.com"
-              autoComplete="off"
-              required
-            />
-          </Field>
           <Field
-            label="Phone number"
-            htmlFor="usher-phone"
-            hint="The digits become the temporary password for the first sign-in."
+            label="Gate label"
+            htmlFor="usher-label"
+            hint="What the usher types to sign in, e.g. GATE-01 or VIP GATE."
             required
           >
             <Input
-              id="usher-phone"
-              type="tel"
-              value={form.phone}
-              onChange={(changeEvent) => setForm((current) => ({ ...current, phone: changeEvent.target.value }))}
-              placeholder="+234 801 234 5678"
+              id="usher-label"
+              value={form.device_label}
+              onChange={(changeEvent) => setForm((current) => ({ ...current, device_label: changeEvent.target.value }))}
+              placeholder="GATE-01"
               required
+              maxLength={40}
+              autoFocus
+              autoComplete="off"
             />
           </Field>
           <Field
-            label="Device label"
-            htmlFor="usher-device"
-            hint="Optional. Helps identify this scanner in the audit log, e.g. USHER-03."
+            label="Password"
+            htmlFor="usher-password"
+            hint="At least 6 characters. Share it with the usher; you can change it here later."
+            required
           >
             <Input
-              id="usher-device"
-              value={form.device_label}
-              onChange={(changeEvent) => setForm((current) => ({ ...current, device_label: changeEvent.target.value }))}
-              placeholder="USHER-02"
-              maxLength={40}
+              id="usher-password"
+              type="text"
+              value={form.password}
+              onChange={(changeEvent) => setForm((current) => ({ ...current, password: changeEvent.target.value }))}
+              placeholder="e.g. gate-2026"
+              required
+              minLength={6}
+              maxLength={255}
+              autoComplete="off"
             />
           </Field>
           <Toggle
             checked={form.calling_enabled}
             onChange={(next) => setForm((current) => ({ ...current, calling_enabled: next }))}
             label="Calling operations"
-            description="Allow this usher to work allocated guests through calling outcomes, not just gate scanning."
+            description="Allow this gate account to work allocated guests through calling outcomes, not just gate scanning."
           />
           {fieldError ? (
             <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
@@ -463,8 +454,8 @@ export default function GatePassesTab({ event }) {
       <Modal
         open={assignOpen}
         onClose={() => setAssignOpen(false)}
-        title="Assign an existing usher"
-        description={`Reuse a scanner account on "${event.title}". The account keeps its password and history.`}
+        title="Assign an existing gate account"
+        description={`Reuse a gate account on "${event.title}". The account keeps its label, password and history.`}
         size="sm"
         footer={
           <>
@@ -479,20 +470,20 @@ export default function GatePassesTab({ event }) {
       >
         <form id="usher-assign-form" onSubmit={submitAssign} className="space-y-4">
           <Field
-            label="Usher email"
-            htmlFor="assign-email"
-            hint="Enter the email of a usher account you already created. If they work another event, they are moved here."
+            label="Gate label"
+            htmlFor="assign-label"
+            hint="Enter the label of a gate account you already created. If it works another event, it moves here."
             required
           >
             <Input
-              id="assign-email"
-              type="email"
-              value={assignForm.email}
-              onChange={(changeEvent) => setAssignForm((current) => ({ ...current, email: changeEvent.target.value }))}
-              placeholder="usher@example.com"
+              id="assign-label"
+              value={assignForm.device_label}
+              onChange={(changeEvent) => setAssignForm((current) => ({ ...current, device_label: changeEvent.target.value }))}
+              placeholder="GATE-01"
               autoComplete="off"
               required
               autoFocus
+              maxLength={40}
             />
           </Field>
           <Toggle
@@ -512,8 +503,8 @@ export default function GatePassesTab({ event }) {
       <Modal
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        title="Edit usher account"
-        description={`Update the scanner login for "${event.title}". The password stays unchanged.`}
+        title="Edit gate account"
+        description={`Update the login for "${event.title}". Leave the password empty to keep the current one.`}
         size="sm"
         footer={
           <>
@@ -527,58 +518,54 @@ export default function GatePassesTab({ event }) {
         }
       >
         <form id="usher-edit-form" onSubmit={submitEdit} className="space-y-4">
-          <Field label="Usher name" htmlFor="usher-edit-name" required>
-            <Input
-              id="usher-edit-name"
-              value={editForm.name}
-              onChange={(changeEvent) => setEditForm((current) => ({ ...current, name: changeEvent.target.value }))}
-              placeholder="Main Gate, VIP Gate, Chidi…"
-              required
-              maxLength={100}
-              autoFocus
-            />
-          </Field>
           <Field
-            label="Email"
-            htmlFor="usher-edit-email"
-            hint="This becomes the sign-in e-mail on the scanner app immediately."
+            label="Gate label"
+            htmlFor="usher-edit-label"
+            hint="What the usher types to sign in. Must be unique."
             required
           >
             <Input
-              id="usher-edit-email"
-              type="email"
-              value={editForm.email}
-              onChange={(changeEvent) => setEditForm((current) => ({ ...current, email: changeEvent.target.value }))}
-              placeholder="usher@example.com"
-              autoComplete="off"
-              required
-            />
-          </Field>
-          <Field label="Phone number" htmlFor="usher-edit-phone" required>
-            <Input
-              id="usher-edit-phone"
-              type="tel"
-              value={editForm.phone}
-              onChange={(changeEvent) => setEditForm((current) => ({ ...current, phone: changeEvent.target.value }))}
-              placeholder="+234 801 234 5678"
-              required
-            />
-          </Field>
-          <Field
-            label="Device label"
-            htmlFor="usher-edit-device"
-            hint="Optional. Helps identify this scanner in the audit log, e.g. USHER-03."
-          >
-            <Input
-              id="usher-edit-device"
+              id="usher-edit-label"
               value={editForm.device_label}
               onChange={(changeEvent) =>
                 setEditForm((current) => ({ ...current, device_label: changeEvent.target.value }))
               }
-              placeholder="USHER-02"
+              placeholder="GATE-01"
+              required
               maxLength={40}
+              autoFocus
+              autoComplete="off"
             />
           </Field>
+          <Field
+            label="New password"
+            htmlFor="usher-edit-password"
+            hint="Optional. Leave empty to keep the current password. Existing sessions stay signed in."
+          >
+            <Input
+              id="usher-edit-password"
+              type="text"
+              value={editForm.password}
+              onChange={(changeEvent) =>
+                setEditForm((current) => ({ ...current, password: changeEvent.target.value }))
+              }
+              placeholder="At least 6 characters"
+              minLength={6}
+              maxLength={255}
+              autoComplete="off"
+            />
+          </Field>
+          {editAccount?.email ? (
+            <p className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 text-[11px] leading-relaxed text-slate-500">
+              Details added by the usher: <span className="text-slate-300">{editAccount.name}</span> ·{' '}
+              {editAccount.email}
+              {editAccount.phone ? ` · ${editAccount.phone}` : ''}
+            </p>
+          ) : (
+            <p className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 text-[11px] leading-relaxed text-slate-500">
+              This usher has not signed in yet, so no personal details are on file.
+            </p>
+          )}
           {editError ? (
             <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
               {editError}
@@ -594,21 +581,21 @@ export default function GatePassesTab({ event }) {
         busy={actionBusy}
         title={
           confirm?.type === 'delete'
-            ? 'Delete this usher account permanently?'
+            ? 'Delete this gate account permanently?'
             : confirm?.type === 'remove'
-              ? 'Remove this usher from the event?'
+              ? 'Remove this gate account from the event?'
               : confirm?.type === 'suspend'
-                ? 'Suspend this usher?'
-                : 'Reactivate this usher?'
+                ? 'Suspend this gate account?'
+                : 'Reactivate this gate account?'
         }
         description={
           confirm?.type === 'delete'
-            ? `"${confirm?.account?.name ?? 'This usher'}" is permanently deleted and cannot sign in to the scanner again. Past scan logs stay, but they lose the usher link. This cannot be undone.`
+            ? `"${labelOf(confirm?.account ?? {})}" is permanently deleted and cannot sign in to the scanner again. Past scan logs stay, but they lose the usher link. This cannot be undone.`
             : confirm?.type === 'remove'
-              ? `"${confirm?.account?.name ?? 'This usher'}" loses access to this event immediately. The reusable account and past scans are kept.`
+              ? `"${labelOf(confirm?.account ?? {})}" loses access to this event immediately. The reusable account and past scans are kept.`
               : confirm?.type === 'suspend'
-                ? `"${confirm?.account?.name ?? 'This usher'}" is signed out and cannot scan this event until reactivated.`
-                : `"${confirm?.account?.name ?? 'This usher'}" can sign in to the scanner again.`
+                ? `"${labelOf(confirm?.account ?? {})}" is signed out and cannot scan this event until reactivated.`
+                : `"${labelOf(confirm?.account ?? {})}" can sign in to the scanner again.`
         }
         confirmLabel={
           confirm?.type === 'delete'

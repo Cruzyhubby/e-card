@@ -33,17 +33,19 @@ The app talks only to `GET /api/ping`, `POST /api/auth/login`, `GET /api/auth/me
 
 ## Signing in
 
-1. The organizer opens **Event Studio → Gate & ushers** and creates an account with the usher's name, e-mail, and phone number. The phone digits become the temporary password.
-2. The organizer shares the e-mail and temporary password with the usher.
-3. The usher enters **Email or username** and **Password** and taps **Sign in** (or presses Enter). The server URL is already detected and checked, and the server resolves the account to its single event.
-4. On first sign-in the app opens **Set a new password**; choose a new password (at least 8 characters, different from the temporary one).
+1. The organizer opens **Event Studio → Gate & ushers** and creates a gate account with just a **gate label** (e.g. `GATE-01`) and a **password**.
+2. The organizer shares the label and password with the ushers at that entrance.
+3. The usher enters the **gate label or e-mail** and **gate password**, then taps **Sign in**.
+4. The app opens **Who is scanning?** — the person enters their own full names (first, middle, last), phone number and e-mail. These identify them in the scan log; the gate account itself stays shared.
 5. **Start scanning**. The account is scoped to that event on the server, so passes from other events return DENIED.
+
+Legacy e-mail accounts with `must_change_password` still get the **Set a new password** screen before the scanner opens.
 
 If the organizer suspends or removes the account in the admin, the session is revoked; the app clears the saved account and returns to sign-in on the next request.
 
 ## Behaviour
 
-- The Sanctum token is stored with **expo-secure-store** (Android Keystore / iOS Keychain, `WHEN_UNLOCKED_THIS_DEVICE_ONLY`). Base URL, device ID, usher identity and the bound event persist in AsyncStorage; the temporary password is never stored. Expo web has no SecureStore, so the web dev build falls back to AsyncStorage.
+- The Sanctum token is stored with **expo-secure-store** (Android Keystore / iOS Keychain, `WHEN_UNLOCKED_THIS_DEVICE_ONLY`). Base URL, device ID, operator details and the bound event persist in AsyncStorage; the gate password is never stored. Expo web has no SecureStore, so the web dev build falls back to AsyncStorage.
 - Sessions written by older builds that kept the token in AsyncStorage are migrated to SecureStore on first launch and the token is removed from AsyncStorage.
 - The saved session is re-verified on launch and on entering the scanner. 401/403 clears the session and returns to setup with an explanation; sign-out deletes the token on the device and revokes it on the server.
 - Camera permission is requested on the scanner screen only. QR payloads like `{APP_URL}/i/{token}` are reduced to the bare token.

@@ -14,6 +14,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -21,18 +22,23 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'string', 'email'],
+            'email' => ['nullable', 'string', 'email', 'max:255', 'required_without:login'],
+            'login' => ['nullable', 'string', 'max:255', 'required_without:email'],
             'password' => ['required', 'string'],
         ]);
 
-        $credentials['email'] = Str::lower(trim((string) $credentials['email']));
+        $identifier = trim((string) ($credentials['login'] ?? ''));
 
-        $user = User::query()->where('email', $credentials['email'])->first();
+        if ($identifier === '') {
+            $identifier = trim((string) ($credentials['email'] ?? ''));
+        }
+
+        $user = $this->findByLogin($identifier);
 
         if ($user === null || ! Hash::check($credentials['password'], $user->password)) {
             AuditLogger::record(
                 'auth.login_failed',
-                'Failed console sign-in for '.$credentials['email'].'.',
+                'Failed console sign-in for '.$identifier.'.',
                 'User',
                 $user?->id
             );
@@ -122,6 +128,61 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * The person using a shared gate account identifies themselves after the
+     * organizer hands over only the gate label and password.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        abort_unless($user->isUsher(), 403, 'Only usher accounts complete a profile here.');
+
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+
+        $data = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $parts = preg_split('/\s+/', trim((string) $value)) ?: [];
+
+                    if (count($parts) < 3) {
+                        $fail('Enter your full name — first, middle and last names.');
+                    }
+                },
+            ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'phone' => ['required', 'string', 'max:32'],
+        ]);
+
+        $user->forceFill([
+            'name' => trim($data['name']),
+            'email' => strtolower(trim($data['email'])),
+            'phone' => trim($data['phone']),
+        ])->save();
+
+        AuditLogger::record(
+            'auth.usher_profile_completed',
+            $user->name.' entered their details on the gate scanner.',
+            'User',
+            $user->id,
+            [],
+            $user
+        );
+
+        return response()->json([
+            'user' => new UserResource($user->refresh()),
+        ]);
+    }
+
     public function changePassword(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -183,8 +244,32 @@ class AuthController extends Controller
         return response()->noContent();
     }
 
+    private function findByLogin(string $identifier): ?User
+    {
+        if ($identifier === '') {
+            return null;
+        }
+
+        if (str_contains($identifier, '@')) {
+            return User::query()->where('email', Str::lower($identifier))->first();
+        }
+
+        // Gate accounts sign in with the device label the organizer assigned;
+        // the legacy device id is accepted as a fallback.
+        return User::query()
+            ->where('role', 'usher')
+            ->whereRaw('lower(device_label) = ?', [Str::lower($identifier)])
+            ->first()
+            ?? User::query()
+                ->where('role', 'usher')
+                ->whereRaw('lower(device_id) = ?', [Str::lower($identifier)])
+                ->first();
+    }
+
     private function throttleKey(Request $request): string
     {
-        return Str::lower((string) $request->input('email')).'|'.$request->ip();
+        $identifier = $request->input('login') ?? $request->input('email');
+
+        return Str::lower((string) $identifier).'|'.$request->ip();
     }
 }

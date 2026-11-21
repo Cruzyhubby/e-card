@@ -15,6 +15,7 @@ import ChangePasswordScreen from './ChangePasswordScreen';
 import Field from './Field';
 import Icon from './Icon';
 import PrimaryButton from './PrimaryButton';
+import UsherProfileScreen from './UsherProfileScreen';
 import {
   ApiError,
   DEFAULT_DEVICE_ID,
@@ -61,6 +62,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(null);
+  const [pendingProfile, setPendingProfile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [checking, setChecking] = useState(false);
   const [discovering, setDiscovering] = useState(false);
@@ -214,11 +216,11 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
     const cleanEmail = email.trim().toLowerCase();
 
     if (!cleanEmail) {
-      setError('Enter the email your organizer registered for you.');
+      setError('Enter the gate label from your organizer, or your e-mail.');
       return;
     }
     if (!password) {
-      setError('Enter your password. The first password is your phone number digits.');
+      setError('Enter the gate password from your organizer.');
       return;
     }
 
@@ -251,7 +253,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
         auth = await api.login(cleanEmail, password);
       } catch (loginError) {
         if (loginError instanceof ApiError && loginError.status === 401) {
-          setError('Incorrect email or password. The first password is your phone number digits.');
+          setError('Incorrect gate label or password.');
         } else if (loginError instanceof ApiError && loginError.status === 0) {
           setConnection({ ok: false, message: offlineMessage(root) });
           setError(offlineMessage(root));
@@ -278,14 +280,9 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
       setPassword('');
       setDeviceId((data.user && data.user.device_id) || DEFAULT_DEVICE_ID);
 
-      if (data.user.must_change_password) {
-        setPending({ token: auth.token, user: data.user, event: data.event });
-        return;
-      }
-
-      setToken(auth.token);
-      setUser(data.user);
-      setEvent(data.event);
+      // Every sign-in identifies the person operating this shared gate account
+      // before the scanner opens.
+      setPendingProfile({ token: auth.token, user: data.user, event: data.event });
     } catch (err) {
       if (alive.current) {
         if (err instanceof ApiError && err.status === 0) {
@@ -331,7 +328,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
     const next = {
       baseUrl: root,
       deviceId: (user && user.device_id) || deviceId.trim() || DEFAULT_DEVICE_ID,
-      email: (user && user.email) || email.trim().toLowerCase(),
+      email: (user && user.email) || '',
       token,
       user,
       eventId: event.id,
@@ -344,6 +341,33 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
 
   const paired = Boolean(token && event);
   const canStart = Boolean(paired && !checking);
+
+  if (pendingProfile) {
+    return (
+      <UsherProfileScreen
+        baseUrl={baseUrl}
+        token={pendingProfile.token}
+        user={pendingProfile.user}
+        onDone={(updatedUser) => {
+          const next = pendingProfile;
+          setPendingProfile(null);
+
+          if (updatedUser && updatedUser.must_change_password) {
+            setPending({ token: next.token, user: updatedUser, event: next.event });
+            return;
+          }
+
+          setToken(next.token);
+          setUser(updatedUser);
+          setEvent(next.event);
+        }}
+        onSessionExpired={() => {
+          setPendingProfile(null);
+          if (onSessionExpired) onSessionExpired();
+        }}
+      />
+    );
+  }
 
   if (pending) {
     return (
@@ -465,11 +489,11 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
                 <>
                   <Text style={styles.cardTitle}>Sign in to your shift</Text>
                   <Text style={styles.cardCopy}>
-                    Enter your assigned usher credentials to verify guest tickets and manage gate entry.
+                    Use the gate label and password from your organizer. Your own details come next.
                   </Text>
 
                   <Field
-                    label="Email or username"
+                    label="Gate label or e-mail"
                     icon="mail"
                     value={email}
                     onChangeText={(value) => {
@@ -478,12 +502,11 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
                     }}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    keyboardType="email-address"
-                    autoComplete="email"
-                    placeholder="you@example.com"
+                    autoComplete="username"
+                    placeholder="Gate A or you@example.com"
                   />
                   <Field
-                    label="Password"
+                    label="Gate password"
                     icon="lock"
                     value={password}
                     onChangeText={(value) => {
@@ -494,7 +517,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
                     autoCorrect={false}
                     secureTextEntry={!showPassword}
                     autoComplete="current-password"
-                    placeholder="Phone number digits on first sign-in"
+                    placeholder="Password from your organizer"
                     style={styles.lastField}
                     onSubmitEditing={handleSignIn}
                     returnKeyType="go"
@@ -570,8 +593,9 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
 
             {!paired ? (
               <Text style={styles.footnote}>
-                Accounts are created by your event organizer in Event Studio → Gate &amp; ushers. First
-                sign-in uses the phone number digits as a temporary password, then you choose your own.
+                Gate accounts are created by your event organizer in Event Studio → Gate &amp; ushers.
+                After signing in, add your full names, phone number and e-mail so scans are traceable
+                to you.
               </Text>
             ) : null}
           </View>

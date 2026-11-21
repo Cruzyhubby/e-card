@@ -32,6 +32,7 @@ Route::get('/invitations/{token}/qr.png', [InvitationController::class, 'ecardQr
 Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::post('/auth/profile', [AuthController::class, 'updateProfile'])->middleware('throttle:12,1');
     Route::post('/auth/password', [AuthController::class, 'changePassword']);
 
     Route::middleware('password.changed')->group(function (): void {

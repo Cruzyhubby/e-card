@@ -21,6 +21,8 @@ class UserResource extends JsonResource
             'must_change_password' => (bool) $this->must_change_password,
             'event_id' => $this->event_id !== null ? (int) $this->event_id : null,
             'device_id' => $this->device_id,
+            'device_label' => $this->device_label,
+            'phone' => $this->phone,
         ];
     }
 }
