@@ -10,16 +10,20 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
 
 class MessagingService
 {
+    /** @var array<int, bool> */
+    private array $designGate = [];
+
     public function __construct(
         private readonly EcardRendererService $ecards,
+        private readonly DesignService $designs,
         private readonly PlatformSettings $settings,
-    ) {
-    }
+    ) {}
 
     /**
      * Dispatch invitations for an event.
@@ -43,6 +47,7 @@ class MessagingService
         foreach ($query->orderBy('name')->get() as $guest) {
             if ($guest->status === 'cancelled' || $this->recipient($guest, $channel) === null) {
                 $skipped++;
+
                 continue;
             }
 
@@ -67,6 +72,14 @@ class MessagingService
      */
     public function sendToGuest(Event $event, Guest $guest, string $channel, ?string $template = null): array
     {
+        $this->designGate[$event->id] ??= $this->designs->availableForSending($event);
+
+        if (! $this->designGate[$event->id]) {
+            throw ValidationException::withMessages([
+                'design' => ['The latest e-card design is awaiting customer approval. Sending unlocks once it is approved.'],
+            ]);
+        }
+
         $message = $this->compose($event, $guest, $channel, $template);
         $recipient = $this->recipient($guest, $channel) ?? '';
 

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Check, Eye, Palette, QrCode, RotateCcw, Save, SlidersHorizontal, Sparkles } from 'lucide-react';
 import EcardPreview from '../ui/EcardPreview';
 import { Field, Select } from '../ui/Field';
+import DesignWorkflowPanel from './DesignWorkflowPanel';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../lib/api';
 import { DEFAULT_ECARD, E_CARD_TEMPLATES, QR_POSITIONS } from '../../lib/constants';
@@ -95,6 +96,8 @@ export default function EcardStudioTab({ event, guests, onSaved }) {
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_430px]">
       <div className="space-y-5">
+        <DesignWorkflowPanel event={event} design={design} onEventUpdated={onSaved} />
+
         <div className="panel p-5">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-accent-400/20 bg-accent-500/10 text-accent-300">

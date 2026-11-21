@@ -14,7 +14,9 @@ class SharedTemplate extends Model
         'category',
         'format',
         'file_path',
+        'file_data',
         'preview_path',
+        'original_name',
         'metadata',
     ];
 

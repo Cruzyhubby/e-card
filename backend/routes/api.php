@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CallingController;
 use App\Http\Controllers\Api\CheckInController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DesignApprovalController;
+use App\Http\Controllers\Api\DesignController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\EventTableController;
 use App\Http\Controllers\Api\EventUsherController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Api\MetaController;
 use App\Http\Controllers\Api\OrganizerPreferencesController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\TemplateController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', HealthController::class);
@@ -30,6 +33,16 @@ Route::get('/invitations/{token}', [InvitationController::class, 'show']);
 Route::post('/invitations/{token}/rsvp', [InvitationController::class, 'rsvp'])->middleware('throttle:30,1');
 Route::get('/invitations/{token}/ecard.svg', [InvitationController::class, 'ecardSvg']);
 Route::get('/invitations/{token}/qr.png', [InvitationController::class, 'ecardQr']);
+
+Route::get('/design-previews/{token}', [DesignApprovalController::class, 'show'])->middleware('throttle:60,1');
+Route::post('/design-previews/{token}', [DesignApprovalController::class, 'decide'])->middleware('throttle:20,1');
+Route::get('/design-previews/{token}/file', [DesignApprovalController::class, 'file'])->middleware('throttle:60,1');
+Route::get('/design-files/{design}', [DesignController::class, 'file'])
+    ->name('design-files.show')
+    ->middleware('signed');
+Route::get('/templates/{template}/file', [TemplateController::class, 'file'])
+    ->name('templates.file')
+    ->middleware('signed');
 
 Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -91,6 +104,17 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
 
         Route::get('/events/{event}/reports', [ReportController::class, 'event']);
         Route::get('/events/{event}/reports/pdf', [ReportController::class, 'eventPdf']);
+
+        Route::get('/templates', [TemplateController::class, 'index']);
+        Route::post('/templates', [TemplateController::class, 'store']);
+        Route::match(['post', 'put', 'patch'], '/templates/{template}', [TemplateController::class, 'update']);
+        Route::delete('/templates/{template}', [TemplateController::class, 'destroy']);
+
+        Route::get('/events/{event}/designs', [DesignController::class, 'index']);
+        Route::post('/events/{event}/designs/template', [DesignController::class, 'fromTemplate']);
+        Route::post('/events/{event}/designs/upload', [DesignController::class, 'fromUpload']);
+        Route::post('/events/{event}/designs/config', [DesignController::class, 'fromConfig']);
+        Route::post('/events/{event}/designs/{design}/submit', [DesignController::class, 'submit']);
 
         Route::middleware('super-admin')->prefix('admin')->group(function (): void {
             Route::get('/reports', [ReportController::class, 'platform']);

@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateEventRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Services\AuditLogger;
+use App\Services\DesignService;
 use App\Services\EcardRendererService;
 use App\Services\MessagingService;
 use App\Services\TableOccupancyService;
@@ -94,7 +95,7 @@ class EventController extends Controller
         return new EventResource($event->loadGuestStats());
     }
 
-    public function update(UpdateEventRequest $request, Event $event, TableOccupancyService $tables): EventResource
+    public function update(UpdateEventRequest $request, Event $event, TableOccupancyService $tables, DesignService $designs): EventResource
     {
         $this->authorize('update', $event);
 
@@ -110,6 +111,10 @@ class EventController extends Controller
         $planChanged = array_key_exists('total_tables', $data) || array_key_exists('total_seats', $data);
 
         $event->update($data);
+
+        if (array_key_exists('ecard_config', $data)) {
+            $designs->syncWorkingCopy($event, $request->user(), (array) $event->ecard_config);
+        }
 
         if ($planChanged) {
             $tables->syncEventPlan($event);
@@ -141,7 +146,7 @@ class EventController extends Controller
 
         $aggregate = DB::table('guests')
             ->where('event_id', $event->id)
-            ->selectRaw("COUNT(*) as total")
+            ->selectRaw('COUNT(*) as total')
             ->selectRaw('COALESCE(SUM(CASE WHEN is_vip THEN 1 ELSE 0 END), 0) as vip')
             ->selectRaw("COALESCE(SUM(CASE WHEN status IN ('sent', 'checked_in') THEN 1 ELSE 0 END), 0) as sent")
             ->selectRaw("COALESCE(SUM(CASE WHEN status = 'checked_in' THEN 1 ELSE 0 END), 0) as checked_in")

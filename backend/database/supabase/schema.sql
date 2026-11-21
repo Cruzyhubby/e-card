@@ -281,6 +281,8 @@ create table if not exists "shared_templates" (
     "category" varchar(32) not null default 'other',
     "format" varchar(12) not null default 'svg',
     "file_path" varchar(255) not null,
+    "file_data" text null,
+    "original_name" varchar(255) null,
     "preview_path" varchar(255) null,
     "metadata" json null,
     "created_at" timestamp(0) without time zone null,
@@ -296,8 +298,11 @@ create table if not exists "design_versions" (
     "template_id" bigint null,
     "version" integer not null default 1,
     "kind" varchar(16) not null default 'working',
+    "format" varchar(12) not null default 'svg',
     "status" varchar(24) not null default 'draft',
     "file_path" varchar(255) null,
+    "file_data" text null,
+    "original_name" varchar(255) null,
     "config" json null,
     "approval_token" varchar(64) null,
     "approved_at" timestamp(0) without time zone null,
@@ -330,6 +335,13 @@ create table if not exists "design_approvals" (
 alter table "design_approvals" add constraint "design_approvals_design_version_id_foreign" foreign key ("design_version_id") references "design_versions" ("id") on delete cascade;
 alter table "design_approvals" add constraint "design_approvals_actor_id_foreign" foreign key ("actor_id") references "users" ("id") on delete set null;
 create index if not exists "design_approvals_design_version_id_acted_at_index" on "design_approvals" ("design_version_id", "acted_at");
+
+-- Design artwork storage (added 2026-11-21)
+alter table "shared_templates" add column if not exists "file_data" text null;
+alter table "shared_templates" add column if not exists "original_name" varchar(255) null;
+alter table "design_versions" add column if not exists "format" varchar(12) not null default 'svg';
+alter table "design_versions" add column if not exists "file_data" text null;
+alter table "design_versions" add column if not exists "original_name" varchar(255) null;
 
 create table if not exists "organizer_settings" (
     "user_id" bigint primary key,

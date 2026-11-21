@@ -140,6 +140,33 @@ export const api = {
     },
   },
 
+  templates: {
+    list: (options = {}) => {
+      const params = new URLSearchParams();
+      if (options.category && options.category !== 'all') params.set('category', options.category);
+      if (options.search) params.set('search', options.search);
+      const query = params.toString();
+      return request(`/templates${query ? `?${query}` : ''}`);
+    },
+    create: (formData) => request('/templates', { method: 'POST', body: formData }),
+    update: (templateId, formData) => request(`/templates/${templateId}`, { method: 'POST', body: formData }),
+    remove: (templateId) => request(`/templates/${templateId}`, { method: 'DELETE' }),
+  },
+
+  designs: {
+    overview: (eventId) => request(`/events/${eventId}/designs`),
+    fromTemplate: (eventId, templateId, config = null) =>
+      request(`/events/${eventId}/designs/template`, { method: 'POST', body: { template_id: templateId, config } }),
+    upload: (eventId, formData) => request(`/events/${eventId}/designs/upload`, { method: 'POST', body: formData }),
+    fromConfig: (eventId, config) => request(`/events/${eventId}/designs/config`, { method: 'POST', body: { config } }),
+    submit: (eventId, designId) => request(`/events/${eventId}/designs/${designId}/submit`, { method: 'POST' }),
+  },
+
+  publicDesign: {
+    get: (token) => request(`/design-previews/${token}`),
+    decide: (token, payload) => request(`/design-previews/${token}`, { method: 'POST', body: payload }),
+  },
+
   guests: {
     list: (eventId, options = {}) => {
       const params = new URLSearchParams();

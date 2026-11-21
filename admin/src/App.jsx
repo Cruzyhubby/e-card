@@ -10,6 +10,7 @@ import EventStudioPage from './pages/EventStudioPage';
 import GateLogsPage from './pages/GateLogsPage';
 import SettingsPage from './pages/SettingsPage';
 import PublicInvitationPage from './pages/PublicInvitationPage';
+import PublicDesignReviewPage from './pages/PublicDesignReviewPage';
 import PlatformOverviewPage from './pages/PlatformOverviewPage';
 import OrganizersPage from './pages/OrganizersPage';
 import ReportsPage from './pages/ReportsPage';
@@ -67,6 +68,7 @@ export default function App() {
       <ToastProvider>
         <Routes>
           <Route path="/i/:token" element={<PublicInvitationPage />} />
+          <Route path="/d/:token" element={<PublicDesignReviewPage />} />
           <Route
             path="/login"
             element={

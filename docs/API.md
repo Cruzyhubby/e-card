@@ -278,6 +278,56 @@ Response `200`, `Content-Type: image/png`, 720×720. Scannable QR whose payload 
 ### GET `/i/{qr_token}` (public, web)
 Guest portal: renders the studio-accurate e-card, event details, and a prominent **Download e-card** button (SVG attachment). This is the destination of both the distribution QR and the QR printed on the card.
 
+## Design studio & approvals
+
+Every event keeps a versioned design history. A design is either a studio configuration or an uploaded SVG/PNG/JPG artwork. Invitations cannot be sent while the newest version is a draft, awaiting approval, or returned for changes; approval also copies the version config onto `events.ecard_config`, and the renderer uses the approved artwork as the e-card background with the guest name and live QR overlaid.
+
+### GET `/api/templates` (auth — organizer or super admin)
+Query (optional): `category`, `search`. Returns `{ data: [Template], categories: [...] }`. Every staff account can reuse the shared library; `Template.owned` tells the UI whether the caller may edit or delete it.
+
+### POST `/api/templates` (multipart: `name`, `category`, `file`)
+`file` accepts SVG, PNG, or JPG up to `eclat.design_max_upload_kb`. SVGs containing scripts, event handlers, or `javascript:` are rejected with `422`. The binary is stored inline (`file_data`) so no host filesystem is required.
+
+### PATCH/DELETE `/api/templates/{template}`
+Owner only (uploader). Other organizers receive `403`; super admins may manage their own uploads.
+
+### GET `/api/templates/{template}/file` (signed URL)
+Serves the stored artwork inline with `nosniff` and a sandbox CSP. Unsigned requests are rejected. `Template.file_url` is a 12-hour signed URL.
+
+### GET `/api/events/{event}/designs` (auth — event owner)
+```json
+{
+  "event": Event,
+  "has_workflow": true,
+  "sending_allowed": false,
+  "latest": Design,
+  "approved": Design,
+  "pending": Design,
+  "approval_url": "https://.../#/d/{approval_token}",
+  "versions": [Design, ...]
+}
+```
+`Design` carries `id`, `version`, `status`, `format`, `original_name`, `template`, `config`, `file_url`, `approved_at`, `approved_by_name`, `feedback`, `created_by`, `created_at`, `can_edit`, `needs_resubmit`.
+
+### POST `/api/events/{event}/designs/template` — `{ template_id, config? }`
+### POST `/api/events/{event}/designs/upload` — multipart `file`, `config` (JSON string)
+### POST `/api/events/{event}/designs/config` — `{ config }`
+Each creates a new draft version (`201`). `POST /api/events/{event}/designs/{design}/submit` moves a draft or returned version to `pending_approval`, rotates the 64-character `approval_token`, supersedes any other pending version, and returns `{ design, approval_url }`.
+
+Saving an edited studio design after an approval automatically opens a new draft version, so sending re-locks until the customer approves the change.
+
+### GET `/api/design-previews/{token}` (public)
+`{ design, event, can_decide }`. The token is the random approval token, so customers review without an account.
+
+### POST `/api/design-previews/{token}` (public)
+```json
+{ "action": "approve|changes", "name": "Amina Hassan", "comment": "optional; required when action=changes" }
+```
+Approval supersedes older approvals, stamps `approved_by_name`/`approved_at`, applies the version config to the event, and re-enables sending. Requesting changes marks the version `rejected` with feedback; the organizer can edit and resubmit. A token whose version has already been decided returns `422` on further decisions.
+
+### GET `/api/design-previews/{token}/file` (public)
+Serves the uploaded artwork inline for the review page. Studio-config-only versions render through `EcardPreview` instead (`file_url` is `null`).
+
 ## Check-in (usher scanner)
 
 ### POST `/api/check-in/verify` (auth — organizer or usher)

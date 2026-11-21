@@ -120,6 +120,13 @@ class EcardRendererService
         $config = $this->configFor($event);
         $accent = $config['accent_color'];
         $textColor = $config['text_color'];
+
+        $artwork = $event->approvedDesign();
+
+        if ($artwork !== null && $artwork->file_data !== null) {
+            return $this->renderArtwork($guest, $config, $artwork->file_data, $artwork->format);
+        }
+
         $monogram = $this->initials($event->host_name);
 
         $svg = [];
@@ -259,6 +266,37 @@ class EcardRendererService
         $svg[] = '</svg>';
 
         return implode('', $svg);
+    }
+
+    /**
+     * Customer-approved artwork fills the canvas; the guest name and live QR
+     * are drawn on top so every invitation stays personalised and scannable.
+     */
+    private function renderArtwork(Guest $guest, array $config, string $fileData, ?string $format): string
+    {
+        $mime = DesignService::MIME[$format ?? 'svg'] ?? 'image/png';
+
+        return implode('', [
+            sprintf(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" role="img" aria-label="%s">',
+                self::WIDTH,
+                self::HEIGHT,
+                self::WIDTH,
+                self::HEIGHT,
+                $this->escape($guest->name.' invitation')
+            ),
+            $this->fontStyles(),
+            sprintf(
+                '<image href="data:%s;base64,%s" x="0" y="0" width="%d" height="%d" preserveAspectRatio="xMidYMid slice"/>',
+                $mime,
+                $fileData,
+                self::WIDTH,
+                self::HEIGHT
+            ),
+            $this->guestBlock($guest, $config, $config['text_color'], $config['accent_color']),
+            $this->qrBlock($guest, $config, $config['accent_color'], $config['text_color']),
+            '</svg>',
+        ]);
     }
 
     private function background(string $accent): string
@@ -414,7 +452,7 @@ class EcardRendererService
         try {
             $renderer = new ImageRenderer(
                 new RendererStyle($size, 1),
-                new SvgImageBackEnd()
+                new SvgImageBackEnd
             );
 
             $qr = (new Writer($renderer))->writeString($content);
@@ -524,6 +562,7 @@ class EcardRendererService
 
             if (mb_strlen($candidate) <= $charactersPerLine) {
                 $current = $candidate;
+
                 continue;
             }
 
