@@ -365,6 +365,18 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
           setPendingProfile(null);
           if (onSessionExpired) onSessionExpired();
         }}
+        onCancel={async () => {
+          const next = pendingProfile;
+          setPendingProfile(null);
+          setPassword('');
+          if (next && next.token) {
+            try {
+              await createApi({ baseUrl, token: next.token }).logout();
+            } catch (err) {
+              // The local sign-out continues even if the network call fails.
+            }
+          }
+        }}
       />
     );
   }

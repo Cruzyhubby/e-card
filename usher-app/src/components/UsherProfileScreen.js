@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,7 +18,7 @@ import { colors, radius, shadows, spacing, typography } from '../theme';
 
 const looksLikeEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-export default function UsherProfileScreen({ baseUrl, token, user, onDone, onSessionExpired }) {
+export default function UsherProfileScreen({ baseUrl, token, user, onDone, onCancel, onSessionExpired }) {
   const gateLabel = (user && (user.device_label || user.device_id)) || 'this gate';
 
   // The gate account is shared, so each person starts with a blank form:
@@ -171,6 +172,15 @@ export default function UsherProfileScreen({ baseUrl, token, user, onDone, onSes
               These details identify you in the gate log. The gate label and password stay the same for
               everyone assigned to this gate.
             </Text>
+
+            <Pressable
+              onPress={onCancel}
+              hitSlop={10}
+              style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.backText}>Use a different gate account</Text>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -274,5 +284,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xl,
     paddingHorizontal: spacing.md,
+  },
+  back: {
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  backText: {
+    ...typography.small,
+    color: colors.accentText,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });
