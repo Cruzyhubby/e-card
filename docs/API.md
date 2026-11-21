@@ -392,7 +392,27 @@ Totals cover only the authenticated usher's own scans, so each gate sees its own
 
 ## Gate accounts (organizer)
 
-Created from **Event Studio → Gate & ushers**. A gate account is a real user account (`role: usher`) bound to one event, provisioned with only a **gate label** and a **password**. Any person at that gate signs in with the shared label/password and must then complete `POST /api/auth/profile` with their own full names (three names), phone number and e-mail before scanning. No gate tokens are ever issued.
+Created from **Event Studio → Gate & ushers** or the **Gate accounts** page. A gate account is a real user account (`role: usher`) bound to one event, provisioned with only a **gate label** and a **password**. Any person at that gate signs in with the shared label/password and must then complete `POST /api/auth/profile` with their own full names (three names), phone number and e-mail before scanning. No gate tokens are ever issued.
+
+### Organizer-wide directory
+
+These endpoints manage gate accounts across every event owned by the authenticated organizer. They return `403` for super admins and ushers, and `404` for an account attached to another organizer's event.
+
+#### GET `/api/ushers` (auth — organizer)
+Response `200`: `{ "data": [ GateAccount, ... ], "events": [ { "id": 1, "title": "...", "event_date": "2026-11-21", "invitation_status": "live" } ], "stats": { "total": 4, "active": 3, "suspended": 1, "assigned": 4, "scans": 29 } }`. A gate account includes `event_title`, `calling_enabled`, `scan_count` and `last_scan_at`.
+
+#### POST `/api/ushers` (auth — organizer)
+Body: `{ "event_id": 1, "device_label": "GATE-01", "password": "gate-2026", "calling_enabled": false }`. `event_id` must be one of the organizer's events. The label is unique across gate accounts (case-insensitive) and the password must be at least 6 characters. Response `201`: `{ "usher": GateAccount }`.
+
+#### PATCH `/api/ushers/{usher}` (auth — organizer)
+Body: `{ "device_label": "GATE-02", "password": "new-secret" }` — `password` is optional; omit it to keep the current password. Setting a password revokes the scanner's active sessions.
+
+#### PATCH `/api/ushers/{usher}/status` (auth — organizer)
+Body: `{ "status": "active" | "suspended" }`. Suspending revokes the usher's sessions immediately and releases their calling allocations for the current event.
+
+#### DELETE `/api/ushers/{usher}` (auth — organizer)
+Permanently deletes the gate account, its tokens and its event assignments. Scan logs keep their rows with a `null` usher. Response `204`.
+
 
 ### GET `/api/events/{event}/ushers` (auth — organizer owner)
 Response `200`: `{ "data": [ Usher, ... ], "stats": { "total": 2, "active": 2, "scans": 31 } }`

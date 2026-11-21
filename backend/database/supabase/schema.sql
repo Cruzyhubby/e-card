@@ -17,7 +17,7 @@ begin;
 create table if not exists "users" (
     "id" bigserial primary key,
     "name" varchar(255) not null,
-    "email" varchar(255) not null,
+    "email" varchar(255) null,
     "password" varchar(255) not null,
     "must_change_password" boolean not null default false,
     "role" varchar(20) not null default 'organizer',

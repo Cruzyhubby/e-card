@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\MetaController;
 use App\Http\Controllers\Api\OrganizerPreferencesController;
+use App\Http\Controllers\Api\OrganizerUsherController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TemplateController;
@@ -73,6 +74,12 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::patch('/events/{event}/ushers/{usher}/calling', [EventUsherController::class, 'calling']);
         Route::delete('/events/{event}/ushers/{usher}', [EventUsherController::class, 'destroy']);
         Route::delete('/events/{event}/ushers/{usher}/account', [EventUsherController::class, 'destroyAccount']);
+
+        Route::get('/ushers', [OrganizerUsherController::class, 'index']);
+        Route::post('/ushers', [OrganizerUsherController::class, 'store']);
+        Route::patch('/ushers/{usher}', [OrganizerUsherController::class, 'update']);
+        Route::patch('/ushers/{usher}/status', [OrganizerUsherController::class, 'status']);
+        Route::delete('/ushers/{usher}', [OrganizerUsherController::class, 'destroy']);
 
         Route::get('/events/{event}/calling', [CallingController::class, 'show']);
         Route::post('/events/{event}/calling/opt-in', [CallingController::class, 'optIn']);

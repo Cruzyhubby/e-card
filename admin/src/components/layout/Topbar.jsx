@@ -8,6 +8,7 @@ import { avatarGradient, cn, initials } from '../../lib/utils';
 
 const LABELS = [
   { match: /^\/events\//, label: 'Event studio' },
+  { match: /^\/ushers/, label: 'Gate accounts' },
   { match: /^\/gate-logs/, label: 'Gate logs' },
   { match: /^\/organizers/, label: 'Organizers' },
   { match: /^\/audit-logs/, label: 'Audit logs' },

@@ -8,6 +8,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import EventStudioPage from './pages/EventStudioPage';
 import GateLogsPage from './pages/GateLogsPage';
+import UshersPage from './pages/UshersPage';
 import SettingsPage from './pages/SettingsPage';
 import PublicInvitationPage from './pages/PublicInvitationPage';
 import PublicDesignReviewPage from './pages/PublicDesignReviewPage';
@@ -98,6 +99,14 @@ export default function App() {
               element={
                 <RequireRole roles={['organizer']}>
                   <EventStudioPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/ushers"
+              element={
+                <RequireRole roles={['organizer']}>
+                  <UshersPage />
                 </RequireRole>
               }
             />

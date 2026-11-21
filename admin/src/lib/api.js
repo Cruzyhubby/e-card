@@ -266,6 +266,14 @@ export const api = {
     eventPdf: (eventId) => requestBlob(`/events/${eventId}/reports/pdf`),
   },
 
+  ushers: {
+    list: () => request('/ushers'),
+    create: (payload) => request('/ushers', { method: 'POST', body: payload }),
+    update: (usherId, payload) => request(`/ushers/${usherId}`, { method: 'PATCH', body: payload }),
+    setStatus: (usherId, status) => request(`/ushers/${usherId}/status`, { method: 'PATCH', body: { status } }),
+    remove: (usherId) => request(`/ushers/${usherId}`, { method: 'DELETE' }),
+  },
+
   admin: {
     overview: () => request('/admin/overview'),
     reports: {
