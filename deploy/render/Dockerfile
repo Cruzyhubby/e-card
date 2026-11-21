@@ -33,6 +33,8 @@ FROM php:8.3-fpm-alpine
 
 # Keep the runtime shared libraries explicitly so deleting the -dev packages
 # below cannot strand pdo_pgsql/zip/intl/gd at container start.
+# The base image already builds mbstring and the XML extensions (dom, xml,
+# simplexml, xmlreader, xmlwriter); rebuilding them here breaks compilation.
 RUN apk add --no-cache \
         nginx \
         supervisor \
@@ -57,15 +59,9 @@ RUN apk add --no-cache \
     && docker-php-ext-install -j"$(nproc)" \
         gd \
         pdo_pgsql \
-        mbstring \
         bcmath \
         intl \
         opcache \
-        dom \
-        simplexml \
-        xml \
-        xmlreader \
-        xmlwriter \
         zip \
     && apk del icu-dev libzip-dev libxml2-dev oniguruma-dev postgresql-dev freetype-dev libjpeg-turbo-dev libpng-dev \
     && rm -rf /var/cache/apk/*
