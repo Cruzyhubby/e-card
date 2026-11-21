@@ -22,7 +22,9 @@ FROM composer:2 AS vendor
 
 WORKDIR /app
 COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
+# The composer image has no gd/zip/xml extensions; the runtime stage installs
+# them all, so resolve the locked versions without platform checks here.
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader --ignore-platform-reqs
 COPY backend/ .
 RUN composer dump-autoload --optimize --no-dev --no-scripts
 
