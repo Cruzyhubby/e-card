@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Bell, ChevronDown, KeyRound, LogOut, Menu, Settings, Sparkles } from 'lucide-react';
+import { Bell, ChevronDown, CircleUser, KeyRound, LogOut, Menu, Settings, Sparkles } from 'lucide-react';
 import { ROLE_LABELS } from '../../lib/constants';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -12,6 +12,7 @@ const LABELS = [
   { match: /^\/gate-logs/, label: 'Gate logs' },
   { match: /^\/organizers/, label: 'Organizers' },
   { match: /^\/audit-logs/, label: 'Audit logs' },
+  { match: /^\/account/, label: 'My account' },
   { match: /^\/admin\/settings/, label: 'Global settings' },
   { match: /^\/settings/, label: 'Settings' },
   { match: /^\//, label: 'Overview' },
@@ -124,6 +125,16 @@ export default function Topbar({ onMenu }) {
                   <Settings className="h-4 w-4 text-slate-500" />
                   {isSuperAdmin ? 'Global settings' : 'Workspace settings'}
                 </Link>
+                {isSuperAdmin ? (
+                  <Link
+                    to="/account"
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
+                    role="menuitem"
+                  >
+                    <CircleUser className="h-4 w-4 text-slate-500" />
+                    My account
+                  </Link>
+                ) : null}
                 <Link
                   to="/change-password"
                   className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/[0.05] hover:text-white"

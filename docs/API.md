@@ -156,6 +156,13 @@ New organizer and usher accounts are created without a password: the initial pas
 Response `200`: `{ "user": User, "event": Event | null }`
 `event` is populated only for ushers and is the single event their account is scoped to. `user.must_change_password` tells the client whether to open the forced password screen.
 
+### PATCH `/api/auth/account` (auth)
+Updates the signed-in organizer or super-admin console account.
+```json
+{ "name": "Amina Hassan", "email": "amina@example.com", "phone": "+255 754 000 000" }
+```
+`name` and `email` are required; `email` must be unique across users (the account's own address is allowed). `phone` is optional and is left untouched when omitted. Response `200`: `{ "user": User }`. Duplicate e-mail returns `422`. Ushers use `POST /api/auth/profile` instead; any other role receives `403`.
+
 ### POST `/api/auth/password` (auth)
 ```json
 { "current_password": "2348012345678", "password": "NewPassw0rd!", "password_confirmation": "NewPassw0rd!" }

@@ -106,6 +106,7 @@ export const api = {
   auth: {
     login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
     me: () => request('/auth/me'),
+    updateAccount: (payload) => request('/auth/account', { method: 'PATCH', body: payload }),
     changePassword: (payload) => request('/auth/password', { method: 'POST', body: payload }),
     forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', body: { email } }),
     resetPassword: (payload) => request('/auth/reset-password', { method: 'POST', body: payload }),

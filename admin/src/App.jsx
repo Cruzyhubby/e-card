@@ -17,6 +17,7 @@ import OrganizersPage from './pages/OrganizersPage';
 import ReportsPage from './pages/ReportsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import PlatformSettingsPage from './pages/PlatformSettingsPage';
+import AccountPage from './pages/AccountPage';
 
 function RequireAuth({ children }) {
   const { user, isAuthenticated, booting } = useAuth();
@@ -147,6 +148,14 @@ export default function App() {
               element={
                 <RequireRole roles={['super_admin']}>
                   <AuditLogsPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <RequireRole roles={['super_admin']}>
+                  <AccountPage />
                 </RequireRole>
               }
             />

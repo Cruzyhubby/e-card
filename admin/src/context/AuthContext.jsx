@@ -102,6 +102,16 @@ export function AuthProvider({ children }) {
     return nextUser;
   }, []);
 
+  const updateAccount = useCallback(async (payload) => {
+    const result = await api.auth.updateAccount(payload);
+    const nextUser = result?.user ?? result;
+    if (nextUser) {
+      localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+      setUser(nextUser);
+    }
+    return nextUser;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.auth.logout();
@@ -120,8 +130,9 @@ export function AuthProvider({ children }) {
       login,
       logout,
       changePassword,
+      updateAccount,
     }),
-    [user, booting, login, logout, changePassword],
+    [user, booting, login, logout, changePassword, updateAccount],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

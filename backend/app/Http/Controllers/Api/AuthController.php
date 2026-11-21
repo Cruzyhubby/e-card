@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -188,6 +189,54 @@ class AuthController extends Controller
         ]);
     }
 
+    public function updateAccount(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        abort_unless($user->isOrganizer() || $user->isSuperAdmin(), 403, 'Only console accounts are edited here.');
+
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'phone' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        $phone = $user->phone;
+
+        if (array_key_exists('phone', $data)) {
+            $phone = $data['phone'] !== null && trim((string) $data['phone']) !== ''
+                ? trim((string) $data['phone'])
+                : null;
+        }
+
+        $user->forceFill([
+            'name' => trim($data['name']),
+            'email' => strtolower(trim($data['email'])),
+            'phone' => $phone,
+        ])->save();
+
+        AuditLogger::record(
+            'auth.account_updated',
+            $user->name.' updated their account details.',
+            'User',
+            $user->id,
+            [],
+            $user
+        );
+
+        return response()->json([
+            'user' => new UserResource($user->refresh()),
+        ]);
+    }
+
     public function changePassword(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -210,7 +259,7 @@ class AuthController extends Controller
 
         $currentToken = $user->currentAccessToken();
 
-        if ($currentToken instanceof \Laravel\Sanctum\PersonalAccessToken) {
+        if ($currentToken instanceof PersonalAccessToken) {
             $user->tokens()->where('id', '!=', $currentToken->getKey())->delete();
         }
 
@@ -242,7 +291,7 @@ class AuthController extends Controller
             $user
         );
 
-        if ($token instanceof \Laravel\Sanctum\PersonalAccessToken) {
+        if ($token instanceof PersonalAccessToken) {
             $token->delete();
         }
 

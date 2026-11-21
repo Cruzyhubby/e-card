@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   BarChart3,
   CalendarDays,
+  CircleUser,
   LayoutDashboard,
   Lock,
   LogOut,
@@ -25,6 +26,7 @@ const NAV_BY_ROLE = {
     { to: '/organizers', label: 'Organizers', icon: Users },
     { to: '/reports', label: 'Reports', icon: BarChart3 },
     { to: '/audit-logs', label: 'Audit logs', icon: ScrollText },
+    { to: '/account', label: 'My account', icon: CircleUser },
     { to: '/admin/settings', label: 'Global settings', icon: SlidersHorizontal },
   ],
   organizer: [
