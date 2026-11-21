@@ -1,0 +1,56 @@
+# Render Blueprint — free plan.
+# Dashboard: New > Blueprint > pick this repository > Apply.
+# Only DB_PASSWORD needs to be pasted (Supabase -> Settings > Database).
+services:
+  - type: web
+    name: eclat
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./deploy/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_TIMEZONE
+        value: Africa/Lagos
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: warning
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        value: aws-0-eu-central-2.pooler.supabase.com
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_DATABASE
+        value: postgres
+      - key: DB_USERNAME
+        value: postgres.pjqtgieasmcvkcnnlpch
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: MAIL_MAILER
+        value: log
+      - key: MAIL_FROM_ADDRESS
+        value: hello@eclat.app
+      - key: ECLAT_MESSAGING_DRIVER
+        value: log
+      - key: SMS_PROVIDER
+        value: kilakona
+      - key: KILAKONA_BASE_URL
+        value: https://api.kilakona.co.tz

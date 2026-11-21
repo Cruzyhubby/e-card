@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Éclat Gate",
+    "slug": "eclat-gate",
+    "scheme": "eclatgate",
+    "sdkVersion": "58.0.0",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#060A13",
+    "icon": "./assets/icon.png",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.eclat.gate",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Éclat Gate uses the camera to scan guest invitation QR codes at the door."
+      }
+    },
+    "android": {
+      "package": "app.eclat.gate",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#090E17"
+      },
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Éclat Gate uses the camera to scan guest invitation QR codes at the door."
+        }
+      ],
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#060A13"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "apiUrl": "",
+      "eas": {
+        "projectId": "3f2c0a28-834a-4bce-8b93-52b3181ffed6"
+      }
+    }
+  }
+}

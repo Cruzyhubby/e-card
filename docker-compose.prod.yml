@@ -1,0 +1,23 @@
+name: eclat
+
+services:
+  app:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env.production
+    volumes:
+      - app_storage:/var/www/html/storage
+
+  web:
+    build:
+      context: ./admin
+      args:
+        VITE_API_URL: ""
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+
+volumes:
+  app_storage:

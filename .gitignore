@@ -1,0 +1,40 @@
+.DS_Store
+Thumbs.db
+*.log
+
+# Node
+node_modules/
+admin/dist/
+usher-app/.expo/
+usher-app/dist/
+
+# PHP
+backend/vendor/
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*.php
+backend/bootstrap/cache/*.php
+backend/public/storage
+
+# Local env files — never commit real credentials
+.env
+.env.*
+!.env.production.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+admin/.env.local
+admin/.env.*.local
+
+# Expo
+usher-app/.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# OS / editor
+.idea/
+.vscode/
