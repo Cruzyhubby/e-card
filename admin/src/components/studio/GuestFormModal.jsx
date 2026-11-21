@@ -260,9 +260,10 @@ export default function GuestFormModal({ open, onClose, onSubmit, guest = null, 
             <Select id="guest-table" value={form.table_number} onChange={update('table_number')}>
               <option value="">Unassigned</option>
               {tableOptions.map((table) => {
-                const full = table.capacity > 0 && table.seats >= table.capacity;
+                const full = table.capacity > 0 && (table.seats >= table.capacity || table.over_capacity);
+                const current = String(form.table_number) === String(table.number);
                 return (
-                  <option key={table.number} value={table.number}>
+                  <option key={table.number} value={table.number} disabled={full && !current}>
                     Table {table.number}
                     {table.capacity > 0 ? ` · ${table.seats}/${table.capacity} seats` : ''}
                     {table.over_capacity ? ' · over capacity' : full ? ' · full' : ''}

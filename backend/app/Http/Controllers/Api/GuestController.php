@@ -66,6 +66,18 @@ class GuestController extends Controller
         $data = $this->withDefaults($request->validated(), $request->user(), $event, $settings);
         $data['status'] = $data['status'] ?? 'pending';
 
+        if (! empty($data['table_number'])) {
+            $error = $tables->assignmentError(
+                $event,
+                (int) $data['table_number'],
+                (int) ($data['attendees_count'] ?? 1)
+            );
+
+            if ($error !== null) {
+                throw ValidationException::withMessages(['table_number' => [$error]]);
+            }
+        }
+
         if ($data['status'] === 'checked_in') {
             $data['checked_in_at'] = now();
         }
@@ -98,6 +110,21 @@ class GuestController extends Controller
         }
 
         $data = $this->withDefaults($data, $request->user(), $guest->event, $settings, $guest);
+
+        $tableNumber = array_key_exists('table_number', $data)
+            ? ($data['table_number'] === null ? null : (int) $data['table_number'])
+            : ($guest->table_number === null ? null : (int) $guest->table_number);
+        $seats = (int) ($data['attendees_count'] ?? $guest->attendees_count);
+        $seatingChanged = (int) $tableNumber !== (int) $guest->table_number
+            || $seats > (int) $guest->attendees_count;
+
+        if ($seatingChanged) {
+            $error = $tables->assignmentError($guest->event, $tableNumber, $seats, (int) $guest->id);
+
+            if ($error !== null) {
+                throw ValidationException::withMessages(['table_number' => [$error]]);
+            }
+        }
 
         $guest->update($data);
         $guest->refresh();

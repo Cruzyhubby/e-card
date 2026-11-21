@@ -244,10 +244,10 @@ Response `200`: `{ "data": [ Guest, ... ] }` ordered by name.
 { "name": "Ada Nwosu", "phone": "+234...", "email": "ada@example.com", "table_number": 4, "seat_number": 2, "is_vip": true }
 ```
 Required: `name`. Optional: `phone`, `email`, `table_number`, `seat_number`, `is_vip`, `status` (`pending` default).
-Response `201`: Guest (a unique `qr_token` UUID is generated server-side).
+Response `201`: Guest (a unique `qr_token` UUID is generated server-side). Assigning a table that is already full returns `422` with `errors.table_number`; bulk import still imports the row and flags the table as over capacity for review.
 
 ### PUT/PATCH `/api/guests/{guest}` (auth)
-Any guest field except `qr_token` / `event_id`. Response `200`: Guest.
+Any guest field except `qr_token` / `event_id`. Moving a guest onto a full table (or increasing seats beyond its remaining capacity) returns `422`; edits that do not change seating are always allowed. Response `200`: Guest.
 
 ### DELETE `/api/guests/{guest}` (auth)
 Response `204`.

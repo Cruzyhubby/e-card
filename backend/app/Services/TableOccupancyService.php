@@ -10,8 +10,7 @@ class TableOccupancyService
 {
     public function __construct(
         private readonly OrganizerSettings $organizerSettings,
-    ) {
-    }
+    ) {}
 
     /**
      * Seat counts are attendee-based: a double card occupies two seats even
@@ -75,6 +74,46 @@ class TableOccupancyService
                 'seats' => (int) ($unassigned->seats ?? 0),
             ],
         ];
+    }
+
+    /**
+     * Rejection text when an individual assignment would overfill a table.
+     * Imports keep excess rows and flag the table instead.
+     */
+    public function assignmentError(Event $event, ?int $tableNumber, int $seats, ?int $ignoreGuestId = null): ?string
+    {
+        if ($tableNumber === null) {
+            return null;
+        }
+
+        $table = $event->eventTables()->where('number', $tableNumber)->first();
+
+        if ($table === null) {
+            return null;
+        }
+
+        $capacity = (int) $table->capacity;
+
+        if ($capacity <= 0) {
+            return null;
+        }
+
+        $used = (int) DB::table('guests')
+            ->where('event_id', $event->id)
+            ->where('table_number', $tableNumber)
+            ->when($ignoreGuestId !== null, fn ($query) => $query->where('id', '!=', $ignoreGuestId))
+            ->sum('attendees_count');
+
+        if ($used + max(1, $seats) <= $capacity) {
+            return null;
+        }
+
+        return sprintf(
+            'Table %d is full: %d of %d seats are already allocated.',
+            $tableNumber,
+            $used,
+            $capacity
+        );
     }
 
     /**
