@@ -74,6 +74,7 @@ return [
         'manual',
         'import',
         'rsvp',
+        'call',
     ],
 
     'max_group_attendees' => 50,

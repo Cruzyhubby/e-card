@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   ArrowUpRight,
+  BarChart3,
   CalendarDays,
   LayoutDashboard,
   Lock,
@@ -22,6 +23,7 @@ const NAV_BY_ROLE = {
   super_admin: [
     { to: '/', label: 'Platform overview', icon: LayoutDashboard, end: true },
     { to: '/organizers', label: 'Organizers', icon: Users },
+    { to: '/reports', label: 'Reports', icon: BarChart3 },
     { to: '/audit-logs', label: 'Audit logs', icon: ScrollText },
     { to: '/admin/settings', label: 'Global settings', icon: SlidersHorizontal },
   ],

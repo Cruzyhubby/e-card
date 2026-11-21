@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\MetaController;
 use App\Http\Controllers\Api\OrganizerPreferencesController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', HealthController::class);
@@ -88,7 +89,12 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::get('/gate/stats', [CheckInController::class, 'gateStats']);
         Route::get('/events/{event}/check-ins', [CheckInController::class, 'index']);
 
+        Route::get('/events/{event}/reports', [ReportController::class, 'event']);
+        Route::get('/events/{event}/reports/pdf', [ReportController::class, 'eventPdf']);
+
         Route::middleware('super-admin')->prefix('admin')->group(function (): void {
+            Route::get('/reports', [ReportController::class, 'platform']);
+            Route::get('/reports/pdf', [ReportController::class, 'platformPdf']);
             Route::get('/overview', PlatformController::class);
             Route::get('/organizers', [OrganizerController::class, 'index']);
             Route::post('/organizers', [OrganizerController::class, 'store']);

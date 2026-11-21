@@ -12,6 +12,7 @@ import SettingsPage from './pages/SettingsPage';
 import PublicInvitationPage from './pages/PublicInvitationPage';
 import PlatformOverviewPage from './pages/PlatformOverviewPage';
 import OrganizersPage from './pages/OrganizersPage';
+import ReportsPage from './pages/ReportsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import PlatformSettingsPage from './pages/PlatformSettingsPage';
 
@@ -119,6 +120,14 @@ export default function App() {
               element={
                 <RequireRole roles={['super_admin']}>
                   <OrganizersPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <RequireRole roles={['super_admin']}>
+                  <ReportsPage />
                 </RequireRole>
               }
             />

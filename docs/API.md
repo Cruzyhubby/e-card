@@ -393,6 +393,28 @@ Guests expose only name, phone, card type, attendee count, table and confirmatio
 ### POST `/api/calling/allocations/{allocation}/attempt` (auth — usher)
 Same body/response as the organizer attempt route, limited to allocations assigned to the authenticated usher on their current event. `403` for another participant's guest or when calling is disabled; `404` for allocations outside the usher's event; `422` for invalid outcomes or a missing `follow_up_at`.
 
+## Reports
+
+### GET `/api/events/{event}/reports` (auth — event organizer)
+One payload covering the general event report and the confirmed guest register. `403` for non-owners.
+```json
+{
+  "event": { "id": 1, "title": "…", "host_name": "…", "organizer": { "name": "…" }, "event_date": "2026-11-21", "start_time": "14:33", "start_time_label": "2:33 PM", "venue": "…", "invitation_status": "live", "accent_color": "#C084FC" },
+  "generated_at": "2026-11-21T19:30:00+01:00",
+  "totals": { "guests": 64, "seats": 64, "invited": 47, "checked_in": 12, "cancelled": 0 },
+  "confirmations": { "confirmed": 1, "pending": 63, "declined": 0, "sources": [ { "source": "call", "label": "Recorded by call", "total": 1 } ] },
+  "distribution": { "whatsapp": { "label": "WhatsApp", "sent": 31, "failed": 0, "queued": 0, "total": 31 }, "email": { … }, "sms": { … } },
+  "calling": { "participants": [ { "name": "…", "kind": "organizer" } ], "allocated": 63, "completed": 1, "follow_ups_due": 0, "attempts": 1, "outcomes": [ { "value": "confirmed", "label": "Confirmed", "total": 1 } ] },
+  "attendance": { "scans": 17, "valid": 12, "already_checked_in": 3, "denied": 2 },
+  "tables": { "tables": 22, "capacity": 220, "guests": 60, "seats": 60, "over_capacity_tables": 0, "unassigned_guests": 4, "unassigned_seats": 4, "rows": [ … ] },
+  "ushers": [ { "id": 8, "name": "…", "label": "GATE-01", "status": "active", "scans": 17, "last_scan_at": "…" } ],
+  "confirmed_guests": [ { "id": 5, "name": "…", "phone": "…", "email": "…", "card_type": "vip", "card_type_label": "VIP", "attendees": 1, "table_number": null, "table_label": "TBA", "confirmation_status": "confirmed", "confirmation_source": "call", "confirmation_source_label": "Recorded by call", "confirmed_at": "…", "delivery": ["email"], "delivery_label": "E-mail" } ]
+}
+```
+
+### GET `/api/events/{event}/reports/pdf` (auth — event organizer)
+Downloads the same data as a branded A4 PDF (`Content-Type: application/pdf`, attachment filename `event-report-{title}-{date}.pdf`). The PDF carries Fahari branding and the event's accent colour.
+
 ## Platform administration (super admin)
 
 All routes below require the `super-admin` middleware. They never expose guest names, contacts, QR tokens, scans, or event e-cards.
@@ -416,6 +438,23 @@ Response `200`:
   "recent_audit": [ AuditLog, ... ]
 }
 ```
+
+### GET `/api/admin/reports`
+System-wide reporting:
+```json
+{
+  "generated_at": "…",
+  "accounts": { "organizers": 2, "organizers_active": 2, "organizers_suspended": 0, "ushers": 4, "ushers_active": 4 },
+  "usage": { "events": 4, "events_live": 4, "events_draft": 0, "events_upcoming": 3, "events_completed": 1, "guests": 314, "guests_confirmed": 1, "guests_declined": 0, "guests_checked_in": 20 },
+  "delivery": { "channels": { "whatsapp": { "label": "WhatsApp", "sent": 127, "failed": 0, "queued": 0, "total": 127 }, "email": { … }, "sms": { … } }, "sent": 193, "failed": 0, "queued": 0 },
+  "engagement": { "check_ins_valid": 20, "check_ins_duplicate": 5, "check_ins_denied": 4, "check_ins_total": 29, "calling_participants": 1, "calling_allocated": 63, "calling_completed": 1, "calling_attempts": 1, "calling_outcomes": [ … ] },
+  "organizers": [ { "id": 1, "name": "…", "email": "…", "status": "active", "events": 4, "guests": 314, "confirmed": 1, "checked_in": 20, "dispatches_sent": 193, "dispatches_failed": 0, "call_attempts": 1 } ],
+  "top_events": [ { "id": 3, "title": "…", "organizer": "…", "event_date": "…", "invitation_status": "live", "guests": 112, "confirmed": 0, "checked_in": 0 } ]
+}
+```
+
+### GET `/api/admin/reports/pdf`
+Downloads the system report as a branded A4 PDF (`platform-report-all-accounts-{date}.pdf`). Contains account, usage, delivery, calling and gate aggregates plus organizer performance; no guest PII.
 
 ### Organizers
 

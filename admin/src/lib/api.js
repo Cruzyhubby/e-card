@@ -234,8 +234,17 @@ export const api = {
     mine: () => request('/calling/mine'),
   },
 
+  reports: {
+    event: (eventId) => request(`/events/${eventId}/reports`),
+    eventPdf: (eventId) => requestBlob(`/events/${eventId}/reports/pdf`),
+  },
+
   admin: {
     overview: () => request('/admin/overview'),
+    reports: {
+      get: () => request('/admin/reports'),
+      pdf: () => requestBlob('/admin/reports/pdf'),
+    },
     organizers: {
       list: () => request('/admin/organizers'),
       create: (payload) => request('/admin/organizers', { method: 'POST', body: payload }),

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
+  BarChart3,
   CalendarDays,
   CheckCircle2,
   KeyRound,
@@ -23,6 +24,7 @@ import EcardStudioTab from '../components/studio/EcardStudioTab';
 import GatePassesTab from '../components/studio/GatePassesTab';
 import GuestsTab from '../components/studio/GuestsTab';
 import OverviewTab from '../components/studio/OverviewTab';
+import ReportsTab from '../components/studio/ReportsTab';
 import SeatingTab from '../components/studio/SeatingTab';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
@@ -41,6 +43,7 @@ const TABS = [
   { id: 'gates', label: 'Gate & ushers', icon: KeyRound },
   { id: 'calling', label: 'Calling', icon: PhoneCall },
   { id: 'checkins', label: 'Check-in logs', icon: ScanLine, countKey: 'logins' },
+  { id: 'reports', label: 'Reports', icon: BarChart3 },
 ];
 
 export default function EventStudioPage() {
@@ -294,6 +297,7 @@ export default function EventStudioPage() {
         {tab === 'gates' ? <GatePassesTab event={event} /> : null}
         {tab === 'calling' ? <CallingTab event={event} onChanged={refreshGuestData} /> : null}
         {tab === 'checkins' ? <CheckInLogsTab event={event} logs={logs} onRefresh={refreshLogs} /> : null}
+        {tab === 'reports' ? <ReportsTab event={event} /> : null}
       </div>
 
       <EventFormModal open={editOpen} onClose={closeEdit} onSubmit={saveEventDetails} event={event} />
