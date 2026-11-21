@@ -31,9 +31,12 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 # ---- Runtime: nginx + php-fpm ---------------------------------------------
 FROM php:8.3-fpm-alpine
 
+# Keep the runtime shared libraries explicitly so deleting the -dev packages
+# below cannot strand pdo_pgsql/zip/intl/gd at container start.
 RUN apk add --no-cache \
         nginx \
         supervisor \
+        curl \
         icu-dev \
         libzip-dev \
         libxml2-dev \
@@ -42,7 +45,14 @@ RUN apk add --no-cache \
         freetype-dev \
         libjpeg-turbo-dev \
         libpng-dev \
-        curl \
+        libpq \
+        libzip \
+        libxml2 \
+        icu-libs \
+        oniguruma \
+        freetype \
+        libjpeg-turbo \
+        libpng \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         gd \
@@ -57,7 +67,7 @@ RUN apk add --no-cache \
         xmlreader \
         xmlwriter \
         zip \
-    && apk del libxml2-dev postgresql-dev \
+    && apk del icu-dev libzip-dev libxml2-dev oniguruma-dev postgresql-dev freetype-dev libjpeg-turbo-dev libpng-dev \
     && rm -rf /var/cache/apk/*
 
 COPY backend/docker/php.ini /usr/local/etc/php/conf.d/eclat.ini
