@@ -16,8 +16,9 @@ services:
         value: production
       - key: APP_DEBUG
         value: "false"
+      # Must match backend/.env: existing app_settings are encrypted with it.
       - key: APP_KEY
-        generateValue: true
+        sync: false
       - key: APP_TIMEZONE
         value: Africa/Lagos
       - key: LOG_CHANNEL

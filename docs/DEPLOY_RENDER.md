@@ -63,9 +63,9 @@ A browser window asks you to sign in to GitHub; no token needs to be copied anyw
 1. In Render click **New + → Blueprint**.
 2. Pick the `eclat` repository. Render reads `render.yaml`.
 3. Render shows one web service named `eclat`, plan **Free**, region **Frankfurt**.
-4. It asks for the missing secret **DB_PASSWORD**:
-   Supabase dashboard → **Project Settings → Database → Database password** (the one
-   already used in `backend/.env`).
+4. It asks for two missing secrets:
+   - **DB_PASSWORD**: Supabase dashboard → **Project Settings → Database → Database password** (the one already used in `backend/.env`).
+   - **APP_KEY**: copy the `APP_KEY=` value from `backend/.env`, including the `base64:` prefix. It must be the same key that wrote the existing Supabase settings, which are encrypted at rest. Do not let Render generate one.
 5. Click **Apply** and wait for the first build (about 5–10 minutes).
 
 When the status turns **Live**, open:
@@ -121,5 +121,6 @@ Until then the scanner still works against a locally running API on the same Wi-
 | Build fails at `composer install` | Platform extensions are installed in the image; re-run the deploy. |
 | Logs show `could not translate host name` | Supabase project paused or wrong `DB_HOST`; resume it in Supabase. |
 | Logs show `password authentication failed` | `DB_PASSWORD` in Render is wrong; edit it in Environment and redeploy. |
-| Page loads but API returns 500 | Check Render logs; usually `APP_KEY` missing (Blueprint generates it automatically). |
+| Page loads but API returns 500 | Check Render logs for `Unsupported cipher or incorrect key length`; `APP_KEY` must be the `base64:` value from `backend/.env`. |
+| Invitation page `/i/...` returns 500 while `/api` works | Same cause: invalid `APP_KEY`. Fix the env var and redeploy. |
 | Health check fails | Entrypoint aborts if Supabase is unreachable, so the container will not start. |
