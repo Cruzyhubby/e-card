@@ -25,9 +25,9 @@ const emptyDecisions = (rows) => {
     if (row.status === 'new') {
       decisions[row.line] = { include: true, fields: [] };
     } else if (row.status === 'duplicate' && row.fields?.length) {
-      decisions[row.line] = { include: true, fields: row.fields.map((field) => field.key) };
+      decisions[row.line] = { include: true, mode: 'merge', fields: row.fields.map((field) => field.key) };
     } else {
-      decisions[row.line] = { include: false, fields: [] };
+      decisions[row.line] = { include: false, mode: 'merge', fields: [] };
     }
   });
 
@@ -86,13 +86,17 @@ export default function ImportGuestsModal({ open, onClose, onAnalyze, onApply, o
 
     return analysis.rows
       .filter((row) => decisions[row.line]?.include && row.status !== 'invalid')
-      .map((row) => ({
-        line: row.line,
-        action: row.status === 'new' ? 'create' : 'update',
-        guest_id: row.match?.id ?? null,
-        data: row.data,
-        fields: row.status === 'new' ? [] : decisions[row.line]?.fields ?? [],
-      }));
+      .map((row) => {
+        const keepBoth = row.status === 'duplicate' && decisions[row.line]?.mode === 'keep_both';
+
+        return {
+          line: row.line,
+          action: row.status === 'new' || keepBoth ? 'create' : 'update',
+          guest_id: row.status === 'new' || keepBoth ? null : row.match?.id ?? null,
+          data: row.data,
+          fields: row.status === 'new' || keepBoth ? [] : decisions[row.line]?.fields ?? [],
+        };
+      });
   }, [analysis, decisions]);
 
   const analyzeFile = async (candidate) => {
@@ -161,6 +165,26 @@ export default function ImportGuestsModal({ open, onClose, onAnalyze, onApply, o
         : [...existing.fields, key];
 
       return { ...current, [row.line]: { ...existing, fields } };
+    });
+  };
+
+  const setDuplicateMode = (row, mode) => {
+    setDecisions((current) => {
+      const existing = current[row.line] ?? { include: false, fields: [] };
+
+      if (mode === 'keep_both') {
+        return { ...current, [row.line]: { ...existing, include: true, mode: 'keep_both' } };
+      }
+
+      return {
+        ...current,
+        [row.line]: {
+          ...existing,
+          mode: 'merge',
+          include: Boolean(row.fields?.length),
+          fields: existing.fields?.length ? existing.fields : (row.fields ?? []).map((field) => field.key),
+        },
+      };
     });
   };
 
@@ -333,8 +357,8 @@ export default function ImportGuestsModal({ open, onClose, onAnalyze, onApply, o
 
             <div className="flex items-start gap-2 rounded-xl border border-white/[0.05] bg-white/[0.015] px-3.5 py-3 text-[11px] text-slate-500">
               <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-600" />
-              Every row is reviewed before saving. Existing guests are matched on phone or email; you choose which
-              fields to merge.
+              Every row is reviewed before saving. Existing guests are matched on phone or email; merge the fields you
+              want, or keep both records side by side.
             </div>
           </>
         ) : (
@@ -419,14 +443,18 @@ export default function ImportGuestsModal({ open, onClose, onAnalyze, onApply, o
                 }
 
                 const hasChanges = row.fields?.length > 0;
+                const keepBoth = decision.mode === 'keep_both';
+                const active = decision.include && (keepBoth || hasChanges);
 
                 return (
                   <div
                     key={row.line}
                     className={cn(
                       'rounded-xl border px-3.5 py-3 transition',
-                      decision.include && hasChanges
-                        ? 'border-amber-400/25 bg-amber-500/[0.05]'
+                      active
+                        ? keepBoth
+                          ? 'border-emerald-400/25 bg-emerald-500/[0.05]'
+                          : 'border-amber-400/25 bg-amber-500/[0.05]'
                         : 'border-white/[0.07] bg-white/[0.015]',
                     )}
                   >
@@ -434,15 +462,28 @@ export default function ImportGuestsModal({ open, onClose, onAnalyze, onApply, o
                       <input
                         type="checkbox"
                         checked={decision.include}
-                        onChange={() => toggleRow(row)}
-                        disabled={!hasChanges}
+                        onChange={() =>
+                          keepBoth
+                            ? setDecisions((current) => ({
+                                ...current,
+                                [row.line]: { ...current[row.line], include: !decision.include },
+                              }))
+                            : toggleRow(row)
+                        }
+                        disabled={!hasChanges && !keepBoth}
                         className="mt-0.5 h-4 w-4 accent-amber-400 disabled:opacity-40"
-                        aria-label={hasChanges ? `Update ${row.match?.name}` : `${row.match?.name} is already up to date`}
+                        aria-label={
+                          !hasChanges && !keepBoth
+                            ? `${row.match?.name} is already up to date`
+                            : `${keepBoth ? 'Add duplicate of' : 'Update'} ${row.match?.name}`
+                        }
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-xs font-semibold text-slate-100">{row.data.name}</p>
-                          <Badge tone="amber">{hasChanges ? 'Match' : 'Up to date'}</Badge>
+                          <Badge tone={keepBoth ? 'emerald' : 'amber'}>
+                            {keepBoth ? 'Keep both' : hasChanges ? 'Match' : 'Up to date'}
+                          </Badge>
                           <span className="text-[10px] text-slate-500">
                             existing: {row.match?.name}
                             {row.match?.table_number ? ` · Table ${row.match.table_number}` : ''}
@@ -452,7 +493,34 @@ export default function ImportGuestsModal({ open, onClose, onAnalyze, onApply, o
                           {contactLine(row.match)} · {rowSummary(row.match)}
                         </p>
 
-                        {hasChanges ? (
+                        <div className="mt-2 inline-flex rounded-lg border border-white/[0.07] bg-ink-950/40 p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setDuplicateMode(row, 'merge')}
+                            className={cn(
+                              'rounded-md px-2.5 py-1 text-[10px] font-semibold transition',
+                              keepBoth ? 'text-slate-400 hover:text-slate-200' : 'bg-amber-400/15 text-amber-200',
+                            )}
+                          >
+                            Merge changes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDuplicateMode(row, 'keep_both')}
+                            className={cn(
+                              'rounded-md px-2.5 py-1 text-[10px] font-semibold transition',
+                              keepBoth ? 'bg-emerald-400/15 text-emerald-200' : 'text-slate-400 hover:text-slate-200',
+                            )}
+                          >
+                            Keep both
+                          </button>
+                        </div>
+
+                        {keepBoth ? (
+                          <p className="mt-2 text-[10px] text-emerald-300/80">
+                            A separate guest record will be created; the existing record stays unchanged.
+                          </p>
+                        ) : hasChanges ? (
                           <div className="mt-2.5 space-y-1.5">
                             <p className="text-[10px] uppercase tracking-[0.12em] text-slate-600">
                               Fields to merge (untick to keep the current value)
