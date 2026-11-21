@@ -252,12 +252,35 @@ Any guest field except `qr_token` / `event_id`. Response `200`: Guest.
 ### DELETE `/api/guests/{guest}` (auth)
 Response `204`.
 
-### POST `/api/events/{event}/guests/import` (auth, multipart)
-Field `file`: CSV with header `name,phone,email,table_number,seat_number,is_vip`. Only `name` is required per row; `is_vip` accepts `1/0/true/false/yes/no`.
-Response `200`: `{ "imported": 40, "skipped": 2, "errors": ["Row 7: name is required"] }`
+### POST `/api/events/{event}/guests/import/analyze` (auth, multipart)
+Field `file`: `.xlsx`, `.csv` or `.txt` up to 8 MB. Rows are matched against the event list on phone or email and never written.
+Response `200`:
+```json
+{
+  "summary": { "total_rows": 42, "new": 34, "duplicates": 6, "invalid": 2 },
+  "rows": [
+    { "line": 2, "status": "new", "data": { "...": "..." } },
+    { "line": 3, "status": "duplicate", "data": { "...": "..." }, "match": { "id": 9, "name": "Ada Nwosu" },
+      "fields": [{ "key": "phone", "label": "Phone", "current": "+255...", "incoming": "+255..." }] },
+    { "line": 4, "status": "invalid", "data": { "...": "..." }, "issues": ["name is required"] }
+  ],
+  "errors": []
+}
+```
+
+### POST `/api/events/{event}/guests/import/apply` (auth)
+```json
+{ "rows": [ { "line": 2, "action": "create", "data": { "...": "..." } },
+            { "line": 3, "action": "update", "guest_id": 9, "data": { "...": "..." }, "fields": ["phone"] },
+            { "line": 4, "action": "skip" } ] }
+```
+`create` adds a guest and is also how the review UI keeps both records for a duplicate; `update` merges only the listed `fields` (blank cells never erase stored values); `skip` ignores the row. Response `200`: `{ "created": 1, "updated": 1, "skipped": 1, "failed": 0, "errors": [] }`.
+
+### GET `/api/guests/import/template` (auth, organizer or super admin)
+Downloads the CSV import template with the accepted headers.
 
 ### POST `/api/guests/{guest}/send` (auth)
-Body: `{ "channel": "whatsapp" | "email" }`. Response `200`: `{ "guest": Guest, "message": "Hi Ada, you're invited to ..." }`.
+Body: `{ "channel": "whatsapp" | "sms" | "email" }`. Response `200`: `{ "guest": Guest, "message": "Hi Ada, you're invited to ..." }`. SMS uses the Kilakona gateway configured in platform settings; the log driver records deliveries without contacting the provider.
 
 ## E-cards & public invitations
 
