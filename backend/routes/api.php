@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\OrganizerController;
 use App\Http\Controllers\Api\Admin\PlatformController;
 use App\Http\Controllers\Api\Admin\SettingsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CallingController;
 use App\Http\Controllers\Api\CheckInController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EventController;
@@ -58,6 +59,14 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::patch('/events/{event}/ushers/{usher}/calling', [EventUsherController::class, 'calling']);
         Route::delete('/events/{event}/ushers/{usher}', [EventUsherController::class, 'destroy']);
         Route::delete('/events/{event}/ushers/{usher}/account', [EventUsherController::class, 'destroyAccount']);
+
+        Route::get('/events/{event}/calling', [CallingController::class, 'show']);
+        Route::post('/events/{event}/calling/opt-in', [CallingController::class, 'optIn']);
+        Route::post('/events/{event}/calling/allocate', [CallingController::class, 'allocate']);
+        Route::patch('/events/{event}/calling/allocations/{allocation}', [CallingController::class, 'reassign']);
+        Route::post('/events/{event}/calling/allocations/{allocation}/attempt', [CallingController::class, 'recordAttempt']);
+        Route::get('/calling/mine', [CallingController::class, 'mine']);
+        Route::post('/calling/allocations/{allocation}/attempt', [CallingController::class, 'recordMyAttempt']);
 
         Route::get('/events/{event}/tables', [EventTableController::class, 'index']);
         Route::post('/events/{event}/tables', [EventTableController::class, 'store']);

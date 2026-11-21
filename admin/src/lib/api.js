@@ -216,6 +216,24 @@ export const api = {
       request(`/events/${eventId}/ushers/${usherId}/account`, { method: 'DELETE' }),
   },
 
+  calling: {
+    show: (eventId) => request(`/events/${eventId}/calling`),
+    optIn: (eventId, enabled) =>
+      request(`/events/${eventId}/calling/opt-in`, { method: 'POST', body: { enabled } }),
+    allocate: (eventId) => request(`/events/${eventId}/calling/allocate`, { method: 'POST', body: {} }),
+    reassign: (eventId, allocationId, participantUserId) =>
+      request(`/events/${eventId}/calling/allocations/${allocationId}`, {
+        method: 'PATCH',
+        body: { participant_user_id: participantUserId },
+      }),
+    attempt: (eventId, allocationId, payload) =>
+      request(`/events/${eventId}/calling/allocations/${allocationId}/attempt`, {
+        method: 'POST',
+        body: payload,
+      }),
+    mine: () => request('/calling/mine'),
+  },
+
   admin: {
     overview: () => request('/admin/overview'),
     organizers: {

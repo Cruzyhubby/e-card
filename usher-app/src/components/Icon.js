@@ -549,6 +549,35 @@ function ShieldIcon({ size, color }) {
   );
 }
 
+function PhoneIcon({ size, color }) {
+  const border = strokeStyle(size, color);
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <View
+        style={{
+          width: size * 0.58,
+          height: size * 0.92,
+          borderRadius: size * 0.16,
+          borderWidth: border.borderWidth,
+          borderColor: color,
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          paddingBottom: size * 0.1,
+        }}
+      >
+        <View
+          style={{
+            width: size * 0.1,
+            height: size * 0.1,
+            borderRadius: size * 0.05,
+            backgroundColor: color,
+          }}
+        />
+      </View>
+    </View>
+  );
+}
+
 const ICONS = {
   qr: QrIcon,
   home: HomeIcon,
@@ -567,6 +596,7 @@ const ICONS = {
   shield: ShieldIcon,
   clock: ClockIcon,
   pin: PinIcon,
+  phone: PhoneIcon,
 };
 
 export default function Icon({ name, size = 18, color = '#F4F7FB' }) {

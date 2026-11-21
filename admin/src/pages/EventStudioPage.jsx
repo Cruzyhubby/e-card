@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   MapPin,
   Pencil,
+  PhoneCall,
   QrCode,
   ScanLine,
   Send,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import EventFormModal from '../components/events/EventFormModal';
 import CheckInLogsTab from '../components/studio/CheckInLogsTab';
+import CallingTab from '../components/studio/CallingTab';
 import DistributionTab from '../components/studio/DistributionTab';
 import EcardStudioTab from '../components/studio/EcardStudioTab';
 import GatePassesTab from '../components/studio/GatePassesTab';
@@ -37,6 +39,7 @@ const TABS = [
   { id: 'ecard', label: 'E-Card studio', icon: QrCode },
   { id: 'distribution', label: 'Distribution', icon: Send },
   { id: 'gates', label: 'Gate & ushers', icon: KeyRound },
+  { id: 'calling', label: 'Calling', icon: PhoneCall },
   { id: 'checkins', label: 'Check-in logs', icon: ScanLine, countKey: 'logins' },
 ];
 
@@ -289,6 +292,7 @@ export default function EventStudioPage() {
           <DistributionTab event={event} guests={guests} onChanged={refreshGuestData} />
         ) : null}
         {tab === 'gates' ? <GatePassesTab event={event} /> : null}
+        {tab === 'calling' ? <CallingTab event={event} onChanged={refreshGuestData} /> : null}
         {tab === 'checkins' ? <CheckInLogsTab event={event} logs={logs} onRefresh={refreshLogs} /> : null}
       </div>
 

@@ -11,10 +11,10 @@ const TABS = [
   { id: 'profile', label: 'Profile', icon: 'user' },
 ];
 
-export default function BottomNav({ active, onChange }) {
+export default function BottomNav({ active, onChange, tabs = TABS }) {
   return (
     <View style={styles.nav}>
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const isActive = active === tab.id;
         return (
           <Pressable

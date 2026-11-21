@@ -62,8 +62,7 @@ class CallAllocation extends Model
 
     public function attempts(): HasMany
     {
-        return $this->hasMany(CallAttempt::class, 'guest_id', 'guest_id')
-            ->where('event_id', $this->event_id);
+        return $this->hasMany(CallAttempt::class, 'guest_id', 'guest_id');
     }
 
     public function scopeAssignedTo(Builder $query, int $userId): Builder

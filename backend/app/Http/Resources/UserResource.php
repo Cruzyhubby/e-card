@@ -23,6 +23,9 @@ class UserResource extends JsonResource
             'device_id' => $this->device_id,
             'device_label' => $this->device_label,
             'phone' => $this->phone,
+            'calling_enabled' => $this->isUsher()
+                ? (bool) $this->activeUsherAssignment()?->calling_enabled
+                : false,
         ];
     }
 }

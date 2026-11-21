@@ -90,6 +90,11 @@ class AuthController extends Controller
 
         RateLimiter::clear($this->throttleKey($request));
 
+        if ($user->isUsher()) {
+            // One active device per gate account: a new sign-in ends the old one.
+            $user->tokens()->delete();
+        }
+
         $token = $user->createToken('eclat-'.$user->role)->plainTextToken;
 
         AuditLogger::record(

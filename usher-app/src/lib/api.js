@@ -320,5 +320,24 @@ export function createApi({ baseUrl, token = null, timeoutMs = REQUEST_TIMEOUT_M
       }
       return data;
     },
+
+    async callingMine() {
+      const data = await request('/calling/mine');
+      if (!data || !data.stats || !Array.isArray(data.allocations)) {
+        throw new ApiError('Unexpected calling response from server.', 0, data);
+      }
+      return data;
+    },
+
+    async recordCallAttempt(allocationId, payload) {
+      const data = await request(`/calling/allocations/${allocationId}/attempt`, {
+        method: 'POST',
+        body: payload,
+      });
+      if (!data || !data.allocation) {
+        throw new ApiError('Unexpected call outcome response from server.', 0, data);
+      }
+      return data.allocation;
+    },
   };
 }

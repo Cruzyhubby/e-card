@@ -185,7 +185,21 @@ export const confirmationSourceLabel = (value) =>
     manual: 'Set by organizer',
     import: 'Imported',
     rsvp: 'Guest RSVP',
+    call: 'Recorded by call',
   })[value] || 'Not recorded';
+
+export const CALLING_OUTCOMES = [
+  { value: 'confirmed', label: 'Confirmed', tone: 'emerald', terminal: true },
+  { value: 'not_confirmed', label: 'Not coming', tone: 'rose', terminal: true },
+  { value: 'no_answer', label: 'No answer', tone: 'amber', terminal: false },
+  { value: 'busy', label: 'Line busy', tone: 'amber', terminal: false },
+  { value: 'phone_off', label: 'Phone off', tone: 'amber', terminal: false },
+  { value: 'wrong_number', label: 'Wrong number', tone: 'rose', terminal: true },
+  { value: 'call_back_later', label: 'Call back later', tone: 'sky', terminal: false },
+];
+
+export const callingOutcomeMeta = (value) =>
+  CALLING_OUTCOMES.find((outcome) => outcome.value === value) ?? null;
 
 export const VALIDATION_META = {
   valid: { label: 'VALID', tone: 'emerald' },
@@ -219,7 +233,7 @@ export const ROLE_LABELS = {
 export const ROLE_DESCRIPTIONS = {
   super_admin: 'Platform owner · organizers, providers & security',
   organizer: 'Event host · events, guests, cards & usher accounts',
-  usher: 'Gate scanner · one event, email and password sign-in',
+  usher: 'Gate scanner · one event, gate label and password sign-in',
 };
 
 export const PAGE_SIZE = 9;

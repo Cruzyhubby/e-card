@@ -16,19 +16,20 @@ API contract: [`docs/API.md`](docs/API.md). Supabase/database setup: [`docs/SUPA
 
 **Dashboard** — live metrics, invitation rate, searchable/filterable event grid, create/edit/delete events.
 
-**Event studio** — six tabs per event:
+**Event studio** — seven tabs per event:
 1. **Overview** — funnel, capacity ring, recent gate scans, quick actions.
 2. **Guest directory** — search, status filters, VIP flags, table/seat assignment, CSV import/export, pagination.
 3. **E-Card studio** — five templates, colour controls, guest-name position, QR placement/size, live preview, save/revert.
 4. **Distribution hub** — WhatsApp/e-mail templates with `{guest_name}`, `{table_number}`, `{event_title}`, `{qr_link}`; audience selection; per-channel preview; dispatch audit. Every dispatch also delivers a QR image (below the WhatsApp text, inside the e-mail) that opens the guest portal, where the e-card can be viewed and downloaded.
-5. **Gate & ushers** — create a gate account for each entrance (a label and a password), see scan counts and last activity, edit the label or reset the password, suspend/reactivate, remove from the event, or delete the account. Each person signs in with the shared label and password, then enters their own full names, phone number and e-mail before scanning. No gate tokens are issued.
-6. **Check-in logs** — live refresh, separate **scanned at** and **status** columns (valid, already used, denied) with colour codes, usher/device attribution.
+5. **Gate & ushers** — create a gate account for each entrance (a label and a password), see scan counts and last activity, edit the label or reset the password, suspend/reactivate, remove from the event, or delete the account. Each person signs in with the shared label and password, then enters their own full names, phone number and e-mail before scanning. No gate tokens are issued. Each account can also be marked as a **calling participant**.
+6. **Calling** — opt the organizer in, auto-distribute pending guests evenly across every calling-enabled gate account and the organizer, reassign or pool guests, and log one of seven call outcomes with notes. Confirmed/Not coming sync straight into the guest list; call-back dates create follow-ups; every attempt stays in the guest's call history.
+7. **Check-in logs** — live refresh, separate **scanned at** and **status** columns (valid, already used, denied) with colour codes, usher/device attribution.
 
 **Guest portal** — at `/i/{qr_token}`: the e-card rendered exactly as designed in the studio (same palette, fonts, event description below the venue, guest-name position, QR placement/size), guest seating, event details, and a **Download e-card** button that saves the SVG. Both the distribution QR and the QR printed on the card resolve here.
 
 **Platform console** — super admin only: platform totals (organizers, events, usher accounts, check-ins), delivery-provider readiness, recent security audit, organizer registration/suspension/deletion, searchable audit log, and encrypted WhatsApp/SMTP global settings. Organizer registration takes name, e-mail, and phone only — the phone digits are the initial password, and the host must set a new password at first sign-in. Guest directories, QR tokens, and gate scans are blocked for this role.
 
-**Usher app** — sign in with the account e-mail and password created by the organizer, complete the forced password change on first use, then run continuous QR scanning with duplicate suppression, haptics, a big colour-coded result overlay, manual token entry, live gate totals from the server, and local session history. The account cannot scan any other event.
+**Usher app** — sign in with the gate label and password created by the organizer (legacy e-mail accounts still work), complete the forced password change on first use, then run continuous QR scanning with duplicate suppression, haptics, a big colour-coded result overlay, manual token entry, live gate totals from the server, and local session history. When the organizer enables calling for the gate, a **Calls** tab appears with the usher's own assigned guests, tap-to-call, seven outcomes, notes, call-back scheduling and personal progress. The account cannot scan or call any other event.
 
 ---
 
@@ -107,7 +108,7 @@ For deployed builds, bake the API origin into the app once — in `usher-app/eas
 
 The same variable works for local builds and exports via `usher-app/.env` (see `.env.example`). When it is set, the app talks to that server and never probes the network.
 
-Sign in with the usher account created in **Event Studio → Gate & ushers** (e-mail plus the temporary phone-digit password). The app forces a password change on first sign-in, remembers the e-mail across sign-outs, and keeps the session until the token is revoked. If the organizer suspends or removes the account, the saved session is cleared and the app returns to sign-in.
+Sign in with the gate account created in **Event Studio → Gate & ushers** (gate label plus password). The app forces a password change on first sign-in (and the operator's own three names, phone and e-mail), remembers the label across sign-outs, and keeps the session until the token is revoked. If the organizer suspends or removes the account, the saved session is cleared and the app returns to sign-in. A second sign-in with the same account replaces the first session.
 
 Usher accounts cannot sign in to the admin web console; entering one there shows a message pointing to the scanner app.
 
@@ -200,7 +201,8 @@ Ushers never enter a server address; the production build always connects to the
 - Role regression across all three tiers: super admin sees platform totals and audit trail but gets 403 on `/events`; organizer manages only their own events, guests, and usher accounts; an usher account resolves `/auth/me` to a single event, returns 403 on other events' guests, and the scanner records VALID for its own event while cross-event scans land as DENIED with updated gate totals.
 - Usher account regression: organizer creates an account with no password field and a phone number, the usher signs in with the phone digits, `403 password_change_required` blocks `/gate/stats`, `/auth/password` clears the flag and scanning returns 200; suspending blocks login and revokes tokens, reactivating restores access, deleting returns 204 and removes login.
 - Password flow regression: organizer created without a password, first login with phone digits, `403 password_change_required` on `/events`, wrong/same-password rejections, successful change clears the flag, old password rejected and new password accepted, seeded accounts unaffected.
-- Browser walkthrough of dashboard, all six studio tabs incl. Gate & ushers, gate logs, settings, and the public invitation page against the live API — plus the live super-admin console (platform overview, organizers, audit logs, global settings).
+- Browser walkthrough of dashboard, all seven studio tabs incl. Gate & ushers and Calling, gate logs, settings, and the public invitation page against the live API — plus the live super-admin console (platform overview, organizers, audit logs, global settings).
+- Calling regression on a throwaway SQLite seed: enable calling for a gate, organizer opt-in, equal allocation across gate + organizer, usher `/calling/mine` scoping, Confirmed → guest becomes confirmed (source `call`), Call back later stores the follow-up, Wrong number closes the allocation, attempt history returned with participant/notes, cross-participant attempt `403`, cross-event allocation `404`, invalid outcome and missing follow-up `422`, disabled calling `403`, and disabling a participant returns their open guests to the pool.
 - Expo Android bundle export via Metro (663 modules) and web export (288 modules).
 - Scanner sign-in in a browser against the live API: automatic server discovery (first responder wins), green **Connected** status, login, and the forced password screen. A build with `EXPO_PUBLIC_API_URL` set contacted only that origin. The admin console rejects usher credentials with a message directing them to the scanner app; organizer login still works.
 - LAN path: API bound to `0.0.0.0`, `GET /api/ping` answered on the machine's LAN address with a private-origin CORS preflight, and the scanner web app opened from that LAN address connected and signed in.

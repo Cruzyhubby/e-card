@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\EventUsherAssignment;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\CallingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -54,7 +55,7 @@ class EventUsherController extends Controller
         ]);
     }
 
-    public function store(Request $request, Event $event): JsonResponse
+    public function store(Request $request, Event $event, CallingService $calling): JsonResponse
     {
         $this->authorize('manageTeam', $event);
 
@@ -98,6 +99,10 @@ class EventUsherController extends Controller
             return $usher;
         });
 
+        if ((bool) ($data['calling_enabled'] ?? false)) {
+            $calling->syncUsher($event, $usher, true);
+        }
+
         AuditLogger::record(
             'usher.created',
             'Gate account "'.$usher->device_label.'" was created for event "'.$event->title.'".',
@@ -115,7 +120,7 @@ class EventUsherController extends Controller
      * Reuse an existing gate account on another event. The account keeps its
      * label, password and history; access to the previous event is ended.
      */
-    public function assign(Request $request, Event $event): JsonResponse
+    public function assign(Request $request, Event $event, CallingService $calling): JsonResponse
     {
         $this->authorize('manageTeam', $event);
 
@@ -171,6 +176,8 @@ class EventUsherController extends Controller
             $usher->update(['event_id' => $event->id]);
         });
 
+        $calling->syncUsher($event, $usher, (bool) ($data['calling_enabled'] ?? false));
+
         AuditLogger::record(
             'usher.assigned',
             'Usher "'.$usher->name.'" was assigned to event "'.$event->title.'"'.($movedFrom ? ' (moved from "'.$movedFrom.'")' : '').'.',
@@ -185,7 +192,7 @@ class EventUsherController extends Controller
         ]);
     }
 
-    public function calling(Request $request, Event $event, User $usher): JsonResponse
+    public function calling(Request $request, Event $event, User $usher, CallingService $calling): JsonResponse
     {
         $this->authorize('manageTeam', $event);
         $this->ensureUsher($event, $usher);
@@ -207,6 +214,7 @@ class EventUsherController extends Controller
         }
 
         $assignment->update(['calling_enabled' => (bool) $data['calling_enabled']]);
+        $calling->syncUsher($event, $usher, (bool) $data['calling_enabled']);
 
         AuditLogger::record(
             'usher.calling_toggled',
@@ -267,7 +275,7 @@ class EventUsherController extends Controller
         ]);
     }
 
-    public function status(Request $request, Event $event, User $usher): JsonResponse
+    public function status(Request $request, Event $event, User $usher, CallingService $calling): JsonResponse
     {
         $this->authorize('manageTeam', $event);
         $this->ensureUsher($event, $usher);
@@ -280,6 +288,7 @@ class EventUsherController extends Controller
 
         if ($data['status'] === 'suspended') {
             $usher->tokens()->delete();
+            $calling->deactivateUser($event, (int) $usher->id);
         }
 
         AuditLogger::record(
@@ -299,7 +308,7 @@ class EventUsherController extends Controller
      * Remove the usher from this event only. The reusable account and its
      * check-in/calling history stay intact.
      */
-    public function destroy(Request $request, Event $event, User $usher): Response
+    public function destroy(Request $request, Event $event, User $usher, CallingService $calling): Response
     {
         $this->authorize('manageTeam', $event);
         $this->ensureUsher($event, $usher);
@@ -323,6 +332,8 @@ class EventUsherController extends Controller
                 $usher->update(['event_id' => $next?->event_id]);
             }
         });
+
+        $calling->deactivateUser($event, (int) $usher->id);
 
         AuditLogger::record(
             'usher.removed',

@@ -37,15 +37,17 @@ All timestamps are ISO 8601 (`2026-11-08T18:42:00+01:00`). Dates are `YYYY-MM-DD
   "email": "usher@eclat.app",
   "phone": "+234 800 000 0001",
   "device_id": "USHER-01",
+  "device_label": "GATE-01",
   "status": "active",
   "event_id": 1,
+  "calling_enabled": true,
   "must_change_password": false,
   "scan_count": 25,
   "last_scan_at": "2026-11-08T18:40:00+01:00",
   "created_at": "2026-11-06T09:12:00+01:00"
 }
 ```
-Usher accounts are ordinary user accounts, sign in from the scanner app with email and password, and never expose token fields. Suspending or deleting the account revokes all of its sessions.
+Usher accounts are ordinary user accounts managed by the organizer. They sign in from the scanner app with their **gate label** and password (email still works as a fallback), and never expose token fields. `calling_enabled` tells the app whether to show the Calls tab. Suspending or deleting the account revokes all of its sessions.
 
 ### E-card config
 ```json
@@ -139,10 +141,10 @@ Any other JSON shape means the URL points at a different service.
 ## Auth
 
 ### POST `/api/auth/login`
-Body: `{ "email": "...", "password": "..." }`
+Body: `{ "login": "GATE-01", "password": "..." }` — `login` may be a gate label or an e-mail; `email` is accepted as an alias and one of the two is required.
 Response `200`: `{ "token": "1|plaintext...", "user": User, "event": Event | null }`
 
-Every role signs in here, including ushers from the scanner app. `event` is populated only for ushers and is the single event their account is scoped to. Only active accounts with a valid assignment authenticate: suspended accounts and ushers without an event return `403` and receive no token; wrong credentials return `422`. Login is throttled to 5 attempts per minute per email + IP (`429` after that).
+Every role signs in here, including ushers from the scanner app. Gate accounts sign in with their label; `event` is populated only for ushers and is the single event their account is scoped to. Only active accounts with a valid assignment authenticate: suspended accounts and ushers without an event return `403` and receive no token; wrong credentials return `422`. Login is throttled to 5 attempts per minute per identifier + IP (`429` after that). An usher sign-in revokes that account's earlier tokens, so only one gate session stays active.
 
 New organizer and usher accounts are created without a password: the initial password is the digit-only phone number on the account, and `must_change_password` is `true`. While that flag is set, every authenticated endpoint except `/api/auth/me`, `/api/auth/logout`, and `/api/auth/password` returns:
 
@@ -343,6 +345,53 @@ Suspending revokes the usher's sessions immediately, so the scanner app can no l
 
 ### DELETE `/api/events/{event}/ushers/{usher}` (auth — organizer owner)
 Ends this event's assignment only; the reusable gate account and its scan/calling history stay intact. Response `204`.
+
+## Calling operations
+
+Pending guests are distributed equally across calling participants — calling-enabled ushers plus the organizer when opted in. A participant is a real organizer or usher account; there is no separate caller role.
+
+Outcomes: `confirmed`, `not_confirmed`, `no_answer`, `busy`, `phone_off`, `wrong_number`, `call_back_later`. `confirmed` and `not_confirmed` update the guest's `confirmation_status` (`confirmed`/`declined`, source `call`) and `wrong_number` closes the allocation. Other outcomes keep it assigned. `call_back_later` requires `follow_up_at`. Every attempt is kept with participant, timestamp, outcome and notes even after a guest is reassigned.
+
+### GET `/api/events/{event}/calling` (auth — organizer owner)
+Response `200`:
+```json
+{
+  "organizer_opt_in": true,
+  "organizer": { "user_id": 1, "name": "Amara Okafor", "kind": "organizer", "stats": { ... } },
+  "participants": [ { "user_id": 5, "name": "Gate 03", "kind": "usher", "stats": { ... } } ],
+  "totals": { "guests_to_call": 42, "allocated": 42, "unallocated": 0, "called": 3, "confirmed": 1, "follow_ups_due": 0 },
+  "allocations": [ Allocation, ... ],
+  "follow_up_days": 2
+}
+```
+Each `stats` block: `assigned`, `called`, `confirmed`, `unresponsive`, `pending`, `follow_ups_due`, `completion`. Each `Allocation` includes `history` (latest 20 attempts with `outcome_label`, `notes`, `user`, `at`), and `participant_user_id` is `null` when the guest sits in the unallocated pool.
+
+### POST `/api/events/{event}/calling/opt-in` (auth — organizer owner)
+Body `{ "enabled": true }`. Adds or removes the organizer as a calling participant. Returns the overview above.
+
+### POST `/api/events/{event}/calling/allocate` (auth — organizer owner)
+Body `{}`. Distributes every unallocated pending guest evenly by current load, including pooled guests returned by disabled/removed participants. Response `200`: overview plus `assigned` (count). `0` when nothing is left to allocate.
+
+### PATCH `/api/events/{event}/calling/allocations/{allocation}` (auth — organizer owner)
+Body `{ "participant_user_id": 5 }`, or `null` to return the guest to the pool. Response `200`: `{ "allocation": Allocation }`.
+
+### POST `/api/events/{event}/calling/allocations/{allocation}/attempt` (auth — organizer owner)
+Body `{ "outcome": "call_back_later", "notes": "…", "follow_up_at": "2026-11-24 10:00:00" }`. Response `200`: `{ "allocation": Allocation }` with history.
+
+### GET `/api/calling/mine` (auth — usher)
+The usher's own queue for their assigned event:
+```json
+{
+  "event": { "id": 3, "title": "…", "event_date": "2026-11-15", "start_time": "18:00", "venue": "…" },
+  "stats": { "assigned": 21, "called": 3, "confirmed": 1, "unresponsive": 0, "pending": 19, "follow_ups_due": 0, "completion": 14 },
+  "allocations": [ Allocation, ... ],
+  "follow_up_days": 2
+}
+```
+Guests expose only name, phone, card type, attendee count, table and confirmation status. `403` when calling is not enabled for this gate.
+
+### POST `/api/calling/allocations/{allocation}/attempt` (auth — usher)
+Same body/response as the organizer attempt route, limited to allocations assigned to the authenticated usher on their current event. `403` for another participant's guest or when calling is disabled; `404` for allocations outside the usher's event; `422` for invalid outcomes or a missing `follow_up_at`.
 
 ## Platform administration (super admin)
 

@@ -11,6 +11,7 @@ use App\Http\Resources\GuestResource;
 use App\Models\Event;
 use App\Models\Guest;
 use App\Models\User;
+use App\Services\CallingService;
 use App\Services\GuestExportService;
 use App\Services\GuestImportService;
 use App\Services\MessagingService;
@@ -59,7 +60,8 @@ class GuestController extends Controller
         StoreGuestRequest $request,
         Event $event,
         OrganizerSettings $settings,
-        TableOccupancyService $tables
+        TableOccupancyService $tables,
+        CallingService $calling
     ): JsonResponse {
         $data = $this->withDefaults($request->validated(), $request->user(), $event, $settings);
         $data['status'] = $data['status'] ?? 'pending';
@@ -69,6 +71,7 @@ class GuestController extends Controller
         }
 
         $guest = $event->guests()->create($data);
+        $calling->autoAssignGuest($guest);
 
         $warnings = $this->seatingWarnings($event, $guest, $tables);
         $payload = (new GuestResource($guest))->toArray($request);
@@ -80,7 +83,8 @@ class GuestController extends Controller
         UpdateGuestRequest $request,
         Guest $guest,
         OrganizerSettings $settings,
-        TableOccupancyService $tables
+        TableOccupancyService $tables,
+        CallingService $calling
     ): JsonResponse {
         $data = $request->validated();
         $status = $data['status'] ?? null;
@@ -97,6 +101,10 @@ class GuestController extends Controller
 
         $guest->update($data);
         $guest->refresh();
+
+        if ($guest->confirmation_status !== 'pending') {
+            $calling->closeForGuest($guest);
+        }
 
         $warnings = $this->seatingWarnings($guest->event, $guest, $tables);
         $payload = (new GuestResource($guest))->toArray($request);

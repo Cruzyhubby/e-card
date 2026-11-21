@@ -5,6 +5,7 @@ import { useCameraPermissions } from 'expo-camera';
 import { useKeepAwake } from 'expo-keep-awake';
 
 import BottomNav from './BottomNav';
+import CallingTab from './CallingTab';
 import ChangePasswordScreen from './ChangePasswordScreen';
 import HistoryTab from './HistoryTab';
 import HomeTab from './HomeTab';
@@ -40,6 +41,21 @@ export default function GateScreen({ session, onSignOut, onSessionExpired }) {
   const [gate, setGate] = useState(null);
   const [gateError, setGateError] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+
+  const callingEnabled = Boolean(session.user && session.user.calling_enabled);
+  const navTabs = useMemo(
+    () =>
+      callingEnabled
+        ? [
+            { id: 'home', label: 'Home', icon: 'home' },
+            { id: 'scan', label: 'Scan', icon: 'scan' },
+            { id: 'calls', label: 'Calls', icon: 'phone' },
+            { id: 'history', label: 'History', icon: 'history' },
+            { id: 'profile', label: 'Profile', icon: 'user' },
+          ]
+        : undefined,
+    [callingEnabled]
+  );
 
   const alive = useRef(true);
   const verifying = useRef(false);
@@ -320,6 +336,10 @@ export default function GateScreen({ session, onSignOut, onSessionExpired }) {
           />
         ) : null}
 
+        {tab === 'calls' ? (
+          <CallingTab api={api} event={session.event} onSessionExpired={onSessionExpired} />
+        ) : null}
+
         {tab === 'history' ? <HistoryTab scans={scans} onClear={() => setScans([])} /> : null}
 
         {tab === 'profile' ? (
@@ -333,7 +353,7 @@ export default function GateScreen({ session, onSignOut, onSessionExpired }) {
         ) : null}
       </View>
 
-      <BottomNav active={tab} onChange={changeTab} />
+      <BottomNav active={tab} onChange={changeTab} tabs={navTabs} />
     </SafeAreaView>
   );
 }

@@ -215,9 +215,10 @@ class GuestImportService
     {
         $result = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 0, 'errors' => []];
         $tableNumbers = [];
+        $calling = app(CallingService::class);
 
         foreach (array_chunk($rows, 100) as $chunk) {
-            DB::transaction(function () use ($chunk, $event, &$result, &$tableNumbers): void {
+            DB::transaction(function () use ($chunk, $event, $calling, &$result, &$tableNumbers): void {
                 foreach ($chunk as $row) {
                     $action = $row['action'] ?? 'skip';
 
@@ -232,6 +233,7 @@ class GuestImportService
                     try {
                         if ($action === 'create') {
                             $guest = $event->guests()->create($this->createPayload($event, $data));
+                            $calling->autoAssignGuest($guest);
                             $result['created']++;
 
                             if ($guest->table_number !== null) {
@@ -260,6 +262,12 @@ class GuestImportService
                             }
 
                             $guest->update($payload);
+                            $guest->refresh();
+
+                            if ($guest->confirmation_status !== 'pending') {
+                                $calling->closeForGuest($guest);
+                            }
+
                             $result['updated']++;
 
                             if ($guest->table_number !== null) {

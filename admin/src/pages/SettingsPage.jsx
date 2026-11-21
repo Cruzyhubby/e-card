@@ -308,7 +308,7 @@ export default function SettingsPage() {
               <div className="grid gap-2 sm:grid-cols-3">
                 {[
                   { step: '01', title: 'Create account', text: 'Open an event → Gate & ushers.' },
-                  { step: '02', title: 'Sign in', text: 'Usher enters email and temporary phone password. The app finds the server itself.' },
+                  { step: '02', title: 'Sign in', text: 'Usher enters the gate label and password. One active session per gate.' },
                   { step: '03', title: 'Scan', text: 'Only that event’s guests can be verified.' },
                 ].map((item) => (
                   <div key={item.step} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
