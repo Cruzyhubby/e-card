@@ -127,15 +127,30 @@ class OrganizerController extends Controller
                 Rule::unique('users', 'email')->ignore($organizer->id),
             ],
             'phone' => ['required', 'string', 'max:32'],
+            'password' => ['nullable', 'string', 'min:8', 'max:255'],
         ]);
+
+        $password = $data['password'] ?? null;
+        unset($data['password']);
 
         $organizer->update($data);
 
+        if (is_string($password) && $password !== '') {
+            $organizer->forceFill([
+                'password' => $password,
+                'must_change_password' => false,
+            ])->save();
+
+            $organizer->tokens()->delete();
+        }
+
         AuditLogger::record(
             'organizer.updated',
-            'Organizer "'.$organizer->name.'" account details were updated by the platform.',
+            'Organizer "'.$organizer->name.'" account details were updated by the platform.'
+                .($password !== null && $password !== '' ? ' Their password was reset.' : ''),
             'User',
-            $organizer->id
+            $organizer->id,
+            ['password_reset' => $password !== null && $password !== '']
         );
 
         return response()->json([

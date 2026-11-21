@@ -553,6 +553,7 @@ Downloads the system report as a branded A4 PDF (`platform-report-all-accounts-{
 
 - `GET /api/admin/organizers` → `{ "data": [ { id, name, email, phone, status, events_count, live_events_count, dispatches_count, check_ins_count, last_event_date, created_at } ], "stats": { "total", "active", "suspended" } }`
 - `POST /api/admin/organizers` body `{ name, email, phone }` — no password field. `phone` is required and its digits (at least 7) become the initial password; `must_change_password` is set and the organizer must choose a new password at first sign-in → `201 { organizer }`
+- `PATCH /api/admin/organizers/{organizer}` body `{ name, email, phone, password? }` — `password` is optional and must be at least 8 characters. When supplied it is set directly (`must_change_password` cleared) and all of the organizer's tokens are revoked, so they must sign in again → `{ organizer }`
 - `PATCH /api/admin/organizers/{organizer}/status` body `{ "status": "active" | "suspended" }` → `{ organizer }`; suspending revokes all of the organizer's tokens immediately.
 - `DELETE /api/admin/organizers/{organizer}` → `204`; cascades the organizer's events, guests, check-ins, dispatches, and usher accounts.
 

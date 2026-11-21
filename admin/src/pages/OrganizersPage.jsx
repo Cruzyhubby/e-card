@@ -40,7 +40,7 @@ export default function OrganizersPage() {
   const [confirmBusy, setConfirmBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editOrganizer, setEditOrganizer] = useState(null);
-  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [editError, setEditError] = useState('');
   const [editSaving, setEditSaving] = useState(false);
 
@@ -108,6 +108,7 @@ export default function OrganizersPage() {
       name: organizer.name || '',
       email: organizer.email || '',
       phone: organizer.phone || '',
+      password: '',
     });
     setEditError('');
     setEditOpen(true);
@@ -119,12 +120,19 @@ export default function OrganizersPage() {
     setEditSaving(true);
     setEditError('');
     try {
-      await api.admin.organizers.update(editOrganizer.id, {
+      const payload = {
         name: editForm.name.trim(),
         email: editForm.email.trim(),
         phone: editForm.phone.trim(),
-      });
-      toast.success('Organizer updated', `${editForm.name.trim()}'s account details were saved.`);
+      };
+      if (editForm.password) payload.password = editForm.password;
+      await api.admin.organizers.update(editOrganizer.id, payload);
+      toast.success(
+        'Organizer updated',
+        editForm.password
+          ? `${editForm.name.trim()}'s details were saved and their password was reset.`
+          : `${editForm.name.trim()}'s account details were saved.`,
+      );
       setEditOpen(false);
       load();
     } catch (apiError) {
@@ -424,7 +432,7 @@ export default function OrganizersPage() {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         title="Edit organizer account"
-        description="Update the host's name, sign-in e-mail, or phone number. Their password stays unchanged."
+        description="Update the host's name, sign-in e-mail, phone number, or reset their password."
         size="sm"
         footer={
           <>
@@ -472,6 +480,21 @@ export default function OrganizersPage() {
               placeholder="+234 801 234 5678"
               minLength={7}
               required
+            />
+          </Field>
+          <Field
+            label="New password"
+            htmlFor="organizer-edit-password"
+            hint="Leave blank to keep the current password. At least 8 characters; saving a new password signs the organizer out."
+          >
+            <Input
+              id="organizer-edit-password"
+              type="text"
+              value={editForm.password}
+              onChange={(changeEvent) => setEditForm((current) => ({ ...current, password: changeEvent.target.value }))}
+              placeholder="Set a new password"
+              autoComplete="new-password"
+              minLength={8}
             />
           </Field>
           {editError ? (
