@@ -15,11 +15,14 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\MetaController;
 use App\Http\Controllers\Api\OrganizerPreferencesController;
+use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', HealthController::class);
 
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/auth/forgot-password', [PasswordResetController::class, 'request'])->middleware('throttle:6,1');
+Route::post('/auth/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
 
 Route::get('/invitations/{token}', [InvitationController::class, 'show']);
 Route::post('/invitations/{token}/rsvp', [InvitationController::class, 'rsvp'])->middleware('throttle:30,1');
@@ -77,6 +80,7 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
             Route::get('/overview', PlatformController::class);
             Route::get('/organizers', [OrganizerController::class, 'index']);
             Route::post('/organizers', [OrganizerController::class, 'store']);
+            Route::patch('/organizers/{organizer}', [OrganizerController::class, 'update']);
             Route::patch('/organizers/{organizer}/status', [OrganizerController::class, 'status']);
             Route::delete('/organizers/{organizer}', [OrganizerController::class, 'destroy']);
             Route::get('/audit-logs', [AuditLogController::class, 'index']);

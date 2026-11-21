@@ -111,6 +111,38 @@ class OrganizerController extends Controller
         ], 201);
     }
 
+    public function update(Request $request, User $organizer): JsonResponse
+    {
+        $this->ensureOrganizer($organizer);
+
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($organizer->id),
+            ],
+            'phone' => ['required', 'string', 'max:32'],
+        ]);
+
+        $organizer->update($data);
+
+        AuditLogger::record(
+            'organizer.updated',
+            'Organizer "'.$organizer->name.'" account details were updated by the platform.',
+            'User',
+            $organizer->id
+        );
+
+        return response()->json([
+            'organizer' => $this->present($organizer->refresh()->loadCount('events')),
+        ]);
+    }
+
     public function status(Request $request, User $organizer): JsonResponse
     {
         $this->ensureOrganizer($organizer);

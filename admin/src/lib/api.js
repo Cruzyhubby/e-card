@@ -107,6 +107,8 @@ export const api = {
     login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
     me: () => request('/auth/me'),
     changePassword: (payload) => request('/auth/password', { method: 'POST', body: payload }),
+    forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', body: { email } }),
+    resetPassword: (payload) => request('/auth/reset-password', { method: 'POST', body: payload }),
     logout: () => request('/auth/logout', { method: 'POST' }).catch(() => null),
   },
 
@@ -215,6 +217,8 @@ export const api = {
     organizers: {
       list: () => request('/admin/organizers'),
       create: (payload) => request('/admin/organizers', { method: 'POST', body: payload }),
+      update: (organizerId, payload) =>
+        request(`/admin/organizers/${organizerId}`, { method: 'PATCH', body: payload }),
       setStatus: (organizerId, status) =>
         request(`/admin/organizers/${organizerId}/status`, { method: 'PATCH', body: { status } }),
       remove: (organizerId) => request(`/admin/organizers/${organizerId}`, { method: 'DELETE' }),

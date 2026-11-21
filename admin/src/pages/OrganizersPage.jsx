@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays,
+  PencilLine,
   RefreshCw,
   ScanLine,
   Search,
@@ -37,6 +38,11 @@ export default function OrganizersPage() {
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editOrganizer, setEditOrganizer] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [editError, setEditError] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,6 +99,38 @@ export default function OrganizersPage() {
       setFormError(apiError.message || 'Could not create the organizer account.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openEdit = (organizer) => {
+    setEditOrganizer(organizer);
+    setEditForm({
+      name: organizer.name || '',
+      email: organizer.email || '',
+      phone: organizer.phone || '',
+    });
+    setEditError('');
+    setEditOpen(true);
+  };
+
+  const submitEdit = async (submitEvent) => {
+    submitEvent.preventDefault();
+    if (!editOrganizer) return;
+    setEditSaving(true);
+    setEditError('');
+    try {
+      await api.admin.organizers.update(editOrganizer.id, {
+        name: editForm.name.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim(),
+      });
+      toast.success('Organizer updated', `${editForm.name.trim()}'s account details were saved.`);
+      setEditOpen(false);
+      load();
+    } catch (apiError) {
+      setEditError(apiError.message || 'Could not update the organizer account.');
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -243,6 +281,14 @@ export default function OrganizersPage() {
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2 xl:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(organizer)}
+                    className="btn-secondary !px-2.5 !py-1.5 text-[10px]"
+                  >
+                    <PencilLine className="h-3.5 w-3.5" />
+                    Edit
+                  </button>
                   {organizer.status === 'active' ? (
                     <button
                       type="button"
@@ -369,6 +415,68 @@ export default function OrganizersPage() {
           {formError ? (
             <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
               {formError}
+            </p>
+          ) : null}
+        </form>
+      </Modal>
+
+      <Modal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Edit organizer account"
+        description="Update the host's name, sign-in e-mail, or phone number. Their password stays unchanged."
+        size="sm"
+        footer={
+          <>
+            <button type="button" onClick={() => setEditOpen(false)} className="btn-secondary">
+              Cancel
+            </button>
+            <button type="submit" form="organizer-edit-form" className="btn-primary" disabled={editSaving}>
+              {editSaving ? 'Saving…' : 'Save changes'}
+            </button>
+          </>
+        }
+      >
+        <form id="organizer-edit-form" onSubmit={submitEdit} className="space-y-4">
+          <Field label="Full name" htmlFor="organizer-edit-name" required>
+            <Input
+              id="organizer-edit-name"
+              value={editForm.name}
+              onChange={(changeEvent) => setEditForm((current) => ({ ...current, name: changeEvent.target.value }))}
+              placeholder="Amara Okafor"
+              required
+              autoFocus
+            />
+          </Field>
+          <Field
+            label="Email address"
+            htmlFor="organizer-edit-email"
+            hint="This becomes the sign-in e-mail immediately."
+            required
+          >
+            <Input
+              id="organizer-edit-email"
+              type="email"
+              value={editForm.email}
+              onChange={(changeEvent) => setEditForm((current) => ({ ...current, email: changeEvent.target.value }))}
+              placeholder="host@company.com"
+              required
+            />
+          </Field>
+          <Field label="Phone number" htmlFor="organizer-edit-phone" required>
+            <Input
+              id="organizer-edit-phone"
+              type="tel"
+              value={editForm.phone}
+              onChange={(changeEvent) => setEditForm((current) => ({ ...current, phone: changeEvent.target.value }))}
+              placeholder="+234 801 234 5678"
+              minLength={7}
+              required
+            />
+          </Field>
+          {editError ? (
+            <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
+              {editError}
             </p>
           ) : null}
         </form>

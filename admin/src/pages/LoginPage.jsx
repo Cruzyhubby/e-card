@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import {
+  ArrowLeft,
   ArrowRight,
   Eye,
   EyeOff,
+  KeyRound,
   Lock,
   Mail,
   QrCode,
@@ -16,6 +18,7 @@ import EcardPreview from '../components/ui/EcardPreview';
 import { Field, Input } from '../components/ui/Field';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { api } from '../lib/api';
 import { DEFAULT_ECARD } from '../lib/constants';
 
 const SAMPLE_EVENT = {
@@ -50,11 +53,84 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetStep, setResetStep] = useState('request');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetShowPassword, setResetShowPassword] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetNotice, setResetNotice] = useState('');
 
   if (isAuthenticated) {
     const destination = user?.must_change_password ? '/change-password' : location.state?.from?.pathname || '/';
     return <Navigate to={destination} replace />;
   }
+
+  const openReset = () => {
+    setResetEmail(email);
+    setResetStep('request');
+    setResetCode('');
+    setResetPassword('');
+    setResetConfirm('');
+    setResetError('');
+    setResetNotice('');
+    setResetOpen(true);
+  };
+
+  const sendResetCode = async () => {
+    if (resetBusy) return;
+    setResetError('');
+    setResetBusy(true);
+    try {
+      const result = await api.auth.forgotPassword(resetEmail.trim());
+      setResetStep('verify');
+      setResetNotice(result?.message || 'A reset code is on its way. Check your inbox.');
+      toast.info('Reset code sent', 'For organizer and admin accounts only.');
+    } catch (apiError) {
+      setResetError(apiError.message || 'Could not send the reset code.');
+    } finally {
+      setResetBusy(false);
+    }
+  };
+
+  const onRequestReset = (event) => {
+    event.preventDefault();
+    sendResetCode();
+  };
+
+  const onResetPassword = async (event) => {
+    event.preventDefault();
+    if (resetBusy) return;
+    setResetError('');
+    if (resetPassword !== resetConfirm) {
+      setResetError('The new passwords do not match.');
+      return;
+    }
+    setResetBusy(true);
+    try {
+      await api.auth.resetPassword({
+        email: resetEmail.trim(),
+        code: resetCode.trim(),
+        password: resetPassword,
+        password_confirmation: resetConfirm,
+      });
+      toast.success('Password reset', 'Sign in with your new password.');
+      setEmail(resetEmail.trim());
+      setPassword('');
+      setResetOpen(false);
+      setResetStep('request');
+      setResetCode('');
+      setResetPassword('');
+      setResetConfirm('');
+    } catch (apiError) {
+      setResetError(apiError.message || 'Could not reset the password.');
+    } finally {
+      setResetBusy(false);
+    }
+  };
 
   const onSubmit = async (event) => {
     event.preventDefault();
@@ -189,12 +265,161 @@ export default function LoginPage() {
               <div className="pointer-events-none absolute -right-16 -top-20 h-44 w-44 rounded-full bg-accent-500/15 blur-3xl" />
               <div className="relative">
                 <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-accent-300">Workspace access</p>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-white">Welcome back</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-white">
+                  {resetOpen ? 'Reset your password' : 'Welcome back'}
+                </h2>
                 <p className="mt-1.5 text-sm text-slate-400">
-                  Sign in to your organizer workspace or the platform console.
+                  {resetOpen
+                    ? resetStep === 'request'
+                      ? 'Organizer and admin accounts receive a 6-digit reset code by e-mail. Usher access is managed by the organizer.'
+                      : 'Enter the 6-digit code from the e-mail and choose a new password.'
+                    : 'Sign in to your organizer workspace or the platform console.'}
                 </p>
 
-                <form onSubmit={onSubmit} className="mt-7 space-y-4">
+                {resetOpen ? (
+                  <form
+                    onSubmit={resetStep === 'request' ? onRequestReset : onResetPassword}
+                    className="mt-7 space-y-4"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setResetOpen(false)}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 transition hover:text-slate-200"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      Back to sign in
+                    </button>
+
+                    <Field label="Email address" htmlFor="reset-email">
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <Input
+                          id="reset-email"
+                          type="email"
+                          autoComplete="email"
+                          required
+                          value={resetEmail}
+                          onChange={(event) => setResetEmail(event.target.value)}
+                          placeholder="you@company.com"
+                          className="pl-10"
+                          disabled={resetStep === 'verify'}
+                        />
+                      </div>
+                    </Field>
+
+                    {resetStep === 'verify' ? (
+                      <>
+                        {resetNotice ? (
+                          <div className="rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-3.5 py-3 text-xs leading-relaxed text-emerald-200">
+                            {resetNotice}
+                          </div>
+                        ) : null}
+
+                        <Field label="Reset code" htmlFor="reset-code" hint="6 digits from the e-mail.">
+                          <div className="relative">
+                            <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                            <Input
+                              id="reset-code"
+                              inputMode="numeric"
+                              autoComplete="one-time-code"
+                              maxLength={6}
+                              pattern="[0-9]{6}"
+                              required
+                              value={resetCode}
+                              onChange={(event) =>
+                                setResetCode(event.target.value.replace(/\D+/g, '').slice(0, 6))
+                              }
+                              placeholder="000000"
+                              className="pl-10 tabular tracking-[0.4em]"
+                            />
+                          </div>
+                        </Field>
+
+                        <Field label="New password" htmlFor="reset-password" hint="At least 8 characters.">
+                          <div className="relative">
+                            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                            <Input
+                              id="reset-password"
+                              type={resetShowPassword ? 'text' : 'password'}
+                              autoComplete="new-password"
+                              minLength={8}
+                              required
+                              value={resetPassword}
+                              onChange={(event) => setResetPassword(event.target.value)}
+                              placeholder="Choose a new password"
+                              className="pl-10 pr-11"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setResetShowPassword((current) => !current)}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-500 transition hover:text-slate-300"
+                              aria-label={resetShowPassword ? 'Hide password' : 'Show password'}
+                            >
+                              {resetShowPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </Field>
+
+                        <Field label="Confirm new password" htmlFor="reset-confirm">
+                          <div className="relative">
+                            <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                            <Input
+                              id="reset-confirm"
+                              type={resetShowPassword ? 'text' : 'password'}
+                              autoComplete="new-password"
+                              minLength={8}
+                              required
+                              value={resetConfirm}
+                              onChange={(event) => setResetConfirm(event.target.value)}
+                              placeholder="Repeat the new password"
+                              className="pl-10"
+                            />
+                          </div>
+                        </Field>
+                      </>
+                    ) : null}
+
+                    {resetError ? (
+                      <div
+                        role="alert"
+                        className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-3 text-xs leading-relaxed text-rose-200"
+                      >
+                        {resetError}
+                      </div>
+                    ) : null}
+
+                    <button type="submit" disabled={resetBusy} className="btn-primary w-full py-3">
+                      {resetBusy ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                          {resetStep === 'request' ? 'Sending code…' : 'Resetting…'}
+                        </>
+                      ) : resetStep === 'request' ? (
+                        <>
+                          Send reset code
+                          <Send className="h-4 w-4" />
+                        </>
+                      ) : (
+                        <>
+                          Set new password
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+
+                    {resetStep === 'verify' ? (
+                      <button
+                        type="button"
+                        onClick={sendResetCode}
+                        disabled={resetBusy}
+                        className="mx-auto block text-[11px] font-semibold text-slate-400 transition hover:text-slate-200"
+                      >
+                        Send a new code
+                      </button>
+                    ) : null}
+                  </form>
+                ) : (
+                  <form onSubmit={onSubmit} className="mt-7 space-y-4">
                   <Field label="Email address" htmlFor="email">
                     <div className="relative">
                       <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
@@ -259,7 +484,16 @@ export default function LoginPage() {
                       </>
                     )}
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={openReset}
+                    className="mx-auto block text-[11px] font-semibold text-accent-300 transition hover:text-accent-200"
+                  >
+                    Forgot password?
+                  </button>
                 </form>
+                )}
               </div>
             </div>
 
