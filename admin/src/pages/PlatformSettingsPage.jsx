@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Eraser, Lock, Mail, MessageCircle, RefreshCw, Save, Send, ShieldCheck } from 'lucide-react';
+import { Eraser, Lock, Mail, MessageCircle, RefreshCw, Save, Send, ShieldCheck, Smartphone } from 'lucide-react';
 import Badge from '../components/ui/Badge';
 import EmptyState from '../components/ui/EmptyState';
 import { Field, Input, Select } from '../components/ui/Field';
@@ -11,12 +11,14 @@ import { cn } from '../lib/utils';
 const GROUP_ICONS = {
   Delivery: Send,
   'WhatsApp gateway': MessageCircle,
+  'SMS gateway (Kilakona)': Smartphone,
   'Email SMTP': Mail,
 };
 
 const GROUP_TONES = {
   Delivery: 'text-accent-300 border-accent-400/20 bg-accent-500/10',
   'WhatsApp gateway': 'text-emerald-300 border-emerald-400/20 bg-emerald-500/10',
+  'SMS gateway (Kilakona)': 'text-gold border-gold/20 bg-gold/10',
   'Email SMTP': 'text-sky-300 border-sky-400/20 bg-sky-500/10',
 };
 
@@ -144,6 +146,10 @@ export default function PlatformSettingsPage() {
   const smtpStored = groups
     .flatMap((group) => group.fields)
     .find((field) => field.key === 'mail.host')?.has_value;
+  const smsProvider = values['sms.provider'];
+  const smsStored = groups
+    .flatMap((group) => group.fields)
+    .find((field) => field.key === 'sms.api_key')?.has_value;
 
   return (
     <form onSubmit={save} className="space-y-6">
@@ -157,8 +163,8 @@ export default function PlatformSettingsPage() {
             Global <span className="font-serif font-normal italic text-accent-300">settings</span>
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-            WhatsApp Cloud API and email SMTP credentials shared by every organizer. Values are encrypted at rest and
-            secrets are never returned to the browser.
+            WhatsApp Cloud API, Kilakona SMS, and email SMTP credentials shared by every organizer. Values are
+            encrypted at rest and secrets are never returned to the browser.
           </p>
         </div>
         <div className="flex items-center gap-2 self-start">
@@ -186,8 +192,8 @@ export default function PlatformSettingsPage() {
         <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-500/10 px-4 py-3.5">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
           <p className="text-[11px] leading-relaxed text-amber-100/80">
-            Live mode is selected but no provider credentials are stored. Add the WhatsApp token and phone number ID
-            and/or SMTP host before dispatching invitations.
+            Live mode is selected but no provider credentials are stored. Add the WhatsApp token and phone number ID,
+            the Kilakona API key, and/or SMTP host before dispatching invitations.
           </p>
         </div>
       ) : null}
@@ -303,6 +309,15 @@ export default function PlatformSettingsPage() {
                   <p className="text-[10px] text-slate-500">Cloud API token storage.</p>
                 </div>
                 <Badge tone={whatsappStored ? 'emerald' : 'slate'}>{whatsappStored ? 'Stored' : 'Missing'}</Badge>
+              </div>
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-3">
+                <div>
+                  <p className="text-xs font-semibold text-slate-200">SMS (Kilakona)</p>
+                  <p className="text-[10px] text-slate-500">API key and sender ID storage.</p>
+                </div>
+                <Badge tone={smsProvider === 'kilakona' ? 'gold' : smsStored ? 'emerald' : 'slate'} dot>
+                  {smsProvider === 'kilakona' ? (smsStored ? 'Live' : 'Key missing') : 'Log'}
+                </Badge>
               </div>
               <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-3">
                 <div>

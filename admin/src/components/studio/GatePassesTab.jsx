@@ -440,8 +440,8 @@ export default function GatePassesTab({ event }) {
           <Toggle
             checked={form.calling_enabled}
             onChange={(next) => setForm((current) => ({ ...current, calling_enabled: next }))}
-            label="Calling operations"
-            description="Allow this gate account to work allocated guests through calling outcomes, not just gate scanning."
+            label="Usher + calling"
+            description="Off assigns Usher only (gate scanning). On also allows calling outcomes for allocated guests on this event."
           />
           {fieldError ? (
             <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
@@ -489,8 +489,8 @@ export default function GatePassesTab({ event }) {
           <Toggle
             checked={assignForm.calling_enabled}
             onChange={(next) => setAssignForm((current) => ({ ...current, calling_enabled: next }))}
-            label="Calling operations"
-            description="Grant calling outcomes for allocated guests on this event."
+            label="Usher + calling"
+            description="Off assigns Usher only. On grants calling outcomes for allocated guests on this event."
           />
           {assignError ? (
             <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
