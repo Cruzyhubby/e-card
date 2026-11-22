@@ -89,6 +89,34 @@ class UsherProfileTest extends TestCase
         ]);
     }
 
+    public function test_scans_are_logged_under_the_operator_on_shift(): void
+    {
+        $usher = $this->usher('USHER-03');
+
+        $plain = $usher->createToken('test')->plainTextToken;
+        $headers = ['Authorization' => 'Bearer '.$plain];
+
+        $this->withHeaders($headers)->postJson('/api/auth/profile', [
+            'name' => 'Amina Wanjiku Otieno',
+            'phone' => '+254 712 345 678',
+            'email' => 'amina@example.com',
+        ])->assertOk();
+
+        $this->withHeaders($headers)->postJson('/api/check-in/verify', [
+            'token' => 'NOT-A-REAL-PASS',
+        ])
+            ->assertOk()
+            ->assertJsonPath('status', 'DENIED');
+
+        $this->assertDatabaseHas('check_in_logs', [
+            'usher_id' => $usher->id,
+            'operator_name' => 'Amina Wanjiku Otieno',
+            'operator_phone' => '+254 712 345 678',
+            'operator_email' => 'amina@example.com',
+            'validation_status' => 'denied',
+        ]);
+    }
+
     public function test_profile_requires_three_names_phone_and_email(): void
     {
         $usher = $this->usher('USHER-02');
