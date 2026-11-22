@@ -18,6 +18,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
+import TwoFactorCard from '../components/TwoFactorCard';
 import Badge from '../components/ui/Badge';
 import { Field, Input, Select, Toggle } from '../components/ui/Field';
 import { useAuth } from '../context/AuthContext';
@@ -424,6 +425,8 @@ npx expo start`}</CodeBlock>
               </button>
             </div>
           </section>
+
+          <TwoFactorCard />
 
           <Section
             icon={ShieldCheck}

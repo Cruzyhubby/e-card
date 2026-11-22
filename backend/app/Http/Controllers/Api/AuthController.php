@@ -8,6 +8,7 @@ use App\Http\Resources\UserResource;
 use App\Models\Event;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\TwoFactorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -20,12 +21,13 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
-    public function login(Request $request): JsonResponse
+    public function login(Request $request, TwoFactorService $twoFactor): JsonResponse
     {
         $credentials = $request->validate([
             'email' => ['nullable', 'string', 'email', 'max:255', 'required_without:login'],
             'login' => ['nullable', 'string', 'max:255', 'required_without:email'],
             'password' => ['required', 'string'],
+            'two_factor_code' => ['nullable', 'string', 'max:32'],
         ]);
 
         $identifier = trim((string) ($credentials['login'] ?? ''));
@@ -89,6 +91,35 @@ class AuthController extends Controller
             $user->load('event');
         }
 
+        if ($user->hasTwoFactorEnabled()) {
+            $code = trim((string) ($credentials['two_factor_code'] ?? ''));
+
+            if ($code === '') {
+                return response()->json([
+                    'message' => 'Enter the code from your authenticator app to finish signing in.',
+                    'code' => 'two_factor_required',
+                ], 422);
+            }
+
+            if (! $twoFactor->consume($user, $code)) {
+                AuditLogger::record(
+                    'auth.two_factor_failed',
+                    'Two-factor code rejected for '.$user->email.'.',
+                    'User',
+                    $user->id,
+                    [],
+                    $user
+                );
+
+                return response()->json([
+                    'message' => 'That authenticator or recovery code is not valid.',
+                    'code' => 'two_factor_invalid',
+                ], 422);
+            }
+        }
+
+        // Only a fully authenticated request clears the login limiter; a pending
+        // or rejected two-factor step keeps counting toward the throttle.
         RateLimiter::clear($this->throttleKey($request));
 
         if ($user->isUsher()) {

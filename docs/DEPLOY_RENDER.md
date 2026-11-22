@@ -79,9 +79,14 @@ The service uses your Supabase data, including any accounts seeded earlier, so l
 organizer account you already use locally. `DemoSeeder` refuses to run when `APP_ENV=production`
 (override only with `ALLOW_DEMO_SEED=true`), so re-runs can never reset live passwords. Then:
 
-1. Change the organizer and super-admin passwords (Seeded demo passwords are publicly documented in this project's history).
-2. Settings → confirm the WhatsApp/SMS driver stays on `log` until real Kilakona credentials exist.
-3. Create one test event/guest and confirm it appears in Supabase → Table Editor.
+1. Change the organizer and super-admin passwords (demo passwords are documented in this project's history and must never be reused).
+2. Settings → **Two-factor authentication** → enable it for the organizer and for the account page's super admin. Save the recovery codes offline.
+3. Settings → confirm the WhatsApp/SMS driver stays on `log` until real Kilakona credentials exist.
+4. Create one test event/guest and confirm it appears in Supabase → Table Editor.
+
+`render.yaml` sets `SESSION_SECURE_COOKIE=true` and `SESSION_ENCRYPT=true`. Render is detected
+automatically for trusted-proxy handling (`RENDER=true`); on any other host set
+`TRUSTED_PROXIES` to the proxy IPs/CIDRs instead of leaving forwarded headers open to the internet.
 
 ## Updating the live app
 

@@ -64,8 +64,8 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = useCallback(async (email, password) => {
-    const result = await api.auth.login(email, password);
+  const login = useCallback(async (email, password, twoFactorCode = '') => {
+    const result = await api.auth.login(email, password, twoFactorCode);
 
     if (result.user?.role === 'usher') {
       localStorage.setItem(TOKEN_KEY, result.token);

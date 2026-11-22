@@ -55,6 +55,7 @@ async function request(path, { method = 'GET', body, signal } = {}) {
       response.status,
       payload?.message || `Request failed with status ${response.status}.`,
       payload?.errors || null,
+      payload?.code || null,
     );
   }
   return payload;
@@ -92,6 +93,7 @@ async function requestBlob(path, { method = 'GET', signal } = {}) {
       response.status,
       payload?.message || `Request failed with status ${response.status}.`,
       payload?.errors || null,
+      payload?.code || null,
     );
   }
 
@@ -104,13 +106,25 @@ async function requestBlob(path, { method = 'GET', signal } = {}) {
 
 export const api = {
   auth: {
-    login: (email, password) => request('/auth/login', { method: 'POST', body: { email, password } }),
+    login: (email, password, twoFactorCode = '') =>
+      request('/auth/login', {
+        method: 'POST',
+        body: { email, password, ...(twoFactorCode ? { two_factor_code: twoFactorCode } : {}) },
+      }),
     me: () => request('/auth/me'),
     updateAccount: (payload) => request('/auth/account', { method: 'PATCH', body: payload }),
     changePassword: (payload) => request('/auth/password', { method: 'POST', body: payload }),
     forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', body: { email } }),
     resetPassword: (payload) => request('/auth/reset-password', { method: 'POST', body: payload }),
     logout: () => request('/auth/logout', { method: 'POST' }).catch(() => null),
+  },
+
+  twoFactor: {
+    status: () => request('/auth/two-factor'),
+    setup: (password) => request('/auth/two-factor/setup', { method: 'POST', body: { password } }),
+    confirm: (code) => request('/auth/two-factor/confirm', { method: 'POST', body: { code } }),
+    disable: (password, code) =>
+      request('/auth/two-factor', { method: 'DELETE', body: { password, code } }),
   },
 
   dashboard: {

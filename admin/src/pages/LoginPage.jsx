@@ -51,6 +51,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
@@ -138,7 +140,7 @@ export default function LoginPage() {
     setError('');
     setBusy(true);
     try {
-      const signedIn = await login(email, password);
+      const signedIn = await login(email, password, twoFactorCode.trim());
       if (signedIn.must_change_password) {
         toast.info('Set a new password', 'Your account uses a temporary phone-number password.');
         navigate('/change-password', { replace: true });
@@ -147,6 +149,13 @@ export default function LoginPage() {
       toast.success(`Welcome back, ${signedIn.name.split(' ')[0]}`, 'Your workspace is ready.');
       navigate(location.state?.from?.pathname || '/', { replace: true });
     } catch (apiError) {
+      if (apiError.code === 'two_factor_required') {
+        setTwoFactorRequired(true);
+        setTwoFactorCode('');
+        setError('');
+        toast.info('Two-factor required', 'Enter the code from your authenticator app.');
+        return;
+      }
       setError(apiError.message || 'Unable to sign in. Please try again.');
     } finally {
       setBusy(false);
@@ -462,6 +471,30 @@ export default function LoginPage() {
                     </div>
                   </Field>
 
+                  {twoFactorRequired ? (
+                    <Field
+                      label="Authenticator code"
+                      htmlFor="two-factor-code"
+                      hint="Six digits from your authenticator app, or a recovery code."
+                    >
+                      <div className="relative">
+                        <ShieldCheck className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                        <Input
+                          id="two-factor-code"
+                          name="two-factor-code"
+                          autoComplete="one-time-code"
+                          inputMode="text"
+                          autoFocus
+                          required
+                          value={twoFactorCode}
+                          onChange={(event) => setTwoFactorCode(event.target.value)}
+                          placeholder="123456"
+                          className="pl-10 font-mono tracking-[0.2em]"
+                        />
+                      </div>
+                    </Field>
+                  ) : null}
+
                   {error ? (
                     <div
                       role="alert"
@@ -475,11 +508,11 @@ export default function LoginPage() {
                     {busy ? (
                       <>
                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Signing in…
+                        {twoFactorRequired ? 'Verifying…' : 'Signing in…'}
                       </>
                     ) : (
                       <>
-                        Enter workspace
+                        {twoFactorRequired ? 'Verify & enter' : 'Enter workspace'}
                         <ArrowRight className="h-4 w-4" />
                       </>
                     )}

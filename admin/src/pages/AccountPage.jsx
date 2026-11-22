@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { KeyRound, Mail, Phone, Save, ShieldCheck, UserRound } from 'lucide-react';
+import TwoFactorCard from '../components/TwoFactorCard';
 import Badge from '../components/ui/Badge';
 import { Field, Input } from '../components/ui/Field';
 import { useAuth } from '../context/AuthContext';
@@ -194,6 +195,8 @@ export default function AccountPage() {
               Change password
             </Link>
           </div>
+
+          <TwoFactorCard />
 
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5 text-[11px] leading-relaxed text-slate-500">
             <UserRound className="mr-1.5 inline h-3.5 w-3.5 -translate-y-px text-slate-500" />

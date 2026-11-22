@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\OrganizerUsherController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TemplateController;
+use App\Http\Controllers\Api\TwoFactorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', HealthController::class);
@@ -53,6 +54,11 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::post('/auth/password', [AuthController::class, 'changePassword']);
 
     Route::middleware('password.changed')->group(function (): void {
+        Route::get('/auth/two-factor', [TwoFactorController::class, 'status'])->middleware('throttle:30,1');
+        Route::post('/auth/two-factor/setup', [TwoFactorController::class, 'setup'])->middleware('throttle:10,1');
+        Route::post('/auth/two-factor/confirm', [TwoFactorController::class, 'confirm'])->middleware('throttle:10,1');
+        Route::delete('/auth/two-factor', [TwoFactorController::class, 'disable'])->middleware('throttle:10,1');
+
         Route::get('/dashboard', DashboardController::class);
         Route::get('/meta', MetaController::class);
 

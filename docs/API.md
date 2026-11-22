@@ -23,11 +23,12 @@ All timestamps are ISO 8601 (`2026-11-08T18:42:00+01:00`). Dates are `YYYY-MM-DD
   "role": "organizer",
   "status": "active",
   "must_change_password": false,
+  "two_factor_enabled": false,
   "event_id": null,
   "device_id": null
 }
 ```
-`role` is one of `super_admin`, `organizer`, `usher`. `status` is `active` or `suspended`. Ushers carry the `event_id` their scanner account is scoped to and the `device_id` assigned by the organizer. `must_change_password` is `true` for organizer and usher accounts provisioned without a password until they replace the phone-number password at first sign-in.
+`role` is one of `super_admin`, `organizer`, `usher`. `status` is `active` or `suspended`. Ushers carry the `event_id` their scanner account is scoped to and the `device_id` assigned by the organizer. `must_change_password` is `true` for organizer and usher accounts provisioned without a password until they replace the phone-number password at first sign-in. `two_factor_enabled` is true only when the account completed authenticator enrollment.
 
 ### Usher account
 ```json
@@ -141,10 +142,18 @@ Any other JSON shape means the URL points at a different service.
 ## Auth
 
 ### POST `/api/auth/login`
-Body: `{ "login": "GATE-01", "password": "..." }` — `login` may be a gate label or an e-mail; `email` is accepted as an alias and one of the two is required.
+Body: `{ "login": "GATE-01", "password": "...", "two_factor_code": "123456" }` — `login` may be a gate label or an e-mail; `email` is accepted as an alias and one of the two is required. `two_factor_code` is only needed for console accounts that enabled two-factor authentication.
 Response `200`: `{ "token": "1|plaintext...", "user": User, "event": Event | null }`
 
 Every role signs in here, including ushers from the scanner app. Gate accounts sign in with their label; `event` is populated only for ushers and is the single event their account is scoped to. Only active accounts with a valid assignment authenticate: suspended accounts and ushers without an event return `403` and receive no token; wrong credentials return `422`. Login is throttled to 5 attempts per minute per identifier + IP (`429` after that). An usher sign-in revokes that account's earlier tokens, so only one gate session stays active.
+
+When an organizer or super admin has two-factor enabled, the first request without `two_factor_code` returns:
+
+```
+422 { "message": "Enter the code from your authenticator app to finish signing in.", "code": "two_factor_required" }
+```
+
+Repeat the request with `two_factor_code` set to a current 6-digit authenticator code or an unused recovery code. Invalid or already-used codes return `422` with `"code": "two_factor_invalid"`. Accepted codes are tracked per time step, so the same code cannot be replayed. Usher accounts cannot enable two-factor.
 
 New organizer and usher accounts are created without a password: the initial password is the digit-only phone number on the account, and `must_change_password` is `true`. While that flag is set, every authenticated endpoint except `/api/auth/me`, `/api/auth/logout`, and `/api/auth/password` returns:
 
@@ -171,6 +180,18 @@ Updates the signed-in organizer or super-admin console account.
 
 ### POST `/api/auth/logout` (auth)
 Deletes the bearer token used for the request. Response `204`; reusing that token afterwards returns `401`. The scanner app also removes the token from SecureStore.
+
+### Two-factor authentication (auth, console roles)
+Organizer and super-admin accounts enroll from **Settings → Two-factor authentication** (or the account page). Secrets and recovery codes are encrypted at rest with `APP_KEY` and never returned again after enrollment.
+
+| Method | Path | Body | Response |
+| --- | --- | --- | --- |
+| GET | `/api/auth/two-factor` | — | `{ "enabled": false, "confirmed_at": null, "recovery_codes_left": 0 }` |
+| POST | `/api/auth/two-factor/setup` | `{ "password": "..." }` | `{ "secret": "P5WF G76S …", "secret_raw": "…", "otpauth_uri": "otpauth://totp/…", "qr_data_uri": "data:image/svg+xml;base64,…" }` |
+| POST | `/api/auth/two-factor/confirm` | `{ "code": "123456" }` | `{ "enabled": true, "recovery_codes": ["XXXXX-XXXXX-XXX", …] }` |
+| DELETE | `/api/auth/two-factor` | `{ "password": "...", "code": "123456" }` | `{ "enabled": false }` |
+
+`setup` requires the current password and returns an unconfirmed secret; `confirm` activates it and returns eight single-use recovery codes that are shown only once. `DELETE` accepts a current authenticator code or an unused recovery code and clears the enrollment. All four endpoints are throttled to 10 requests per minute (30 for status) and return `403` to usher accounts.
 
 ## Dashboard
 

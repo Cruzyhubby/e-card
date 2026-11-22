@@ -19,6 +19,7 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'status' => $this->status,
             'must_change_password' => (bool) $this->must_change_password,
+            'two_factor_enabled' => (bool) $this->two_factor_confirmed_at,
             'event_id' => $this->event_id !== null ? (int) $this->event_id : null,
             'device_id' => $this->device_id,
             'device_label' => $this->device_label,

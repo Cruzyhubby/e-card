@@ -22,10 +22,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Render terminates TLS and forwards the client IP; without trusting the
-        // proxy every request looks like it came from the load balancer, which
-        // would make IP rate limits global.
-        $middleware->trustProxies(at: '*');
+        // Only trust forwarded headers when we actually sit behind a proxy.
+        // Render sets RENDER=true automatically; other hosts set TRUSTED_PROXIES.
+        // Trusting every peer unconditionally lets a direct client spoof its IP.
+        $trustedProxies = env('TRUSTED_PROXIES');
+        if ($trustedProxies === null || trim((string) $trustedProxies) === '') {
+            $trustedProxies = filter_var(env('RENDER', false), FILTER_VALIDATE_BOOLEAN) ? '*' : null;
+        }
+        if ($trustedProxies !== null && $trustedProxies !== '') {
+            $middleware->trustProxies(at: $trustedProxies);
+        }
         $middleware->append(SecurityHeaders::class);
         $middleware->statefulApi();
         $middleware->api(prepend: [ForceJsonResponse::class]);
