@@ -11,6 +11,7 @@ class CheckInLog extends Model
         'event_id',
         'guest_id',
         'usher_id',
+        'usher_session_id',
         'device_id',
         'operator_name',
         'operator_phone',
@@ -41,5 +42,10 @@ class CheckInLog extends Model
     public function usher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usher_id');
+    }
+
+    public function usherSession(): BelongsTo
+    {
+        return $this->belongsTo(UsherSession::class);
     }
 }

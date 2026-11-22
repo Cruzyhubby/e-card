@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   CircleUser,
+  Clock,
   LayoutDashboard,
   Lock,
   LogOut,
@@ -32,6 +33,7 @@ const NAV_BY_ROLE = {
   organizer: [
     { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
     { to: '/ushers', label: 'Gate accounts', icon: Users },
+    { to: '/usher-shifts', label: 'Usher shifts', icon: Clock },
     { to: '/gate-logs', label: 'Gate logs', icon: ScanLine },
     { to: '/settings', label: 'Settings', icon: Settings },
   ],

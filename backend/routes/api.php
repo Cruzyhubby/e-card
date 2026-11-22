@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\TemplateController;
 use App\Http\Controllers\Api\TwoFactorController;
+use App\Http\Controllers\Api\UsherShiftController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', HealthController::class);
@@ -81,6 +82,9 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
         Route::patch('/events/{event}/ushers/{usher}/calling', [EventUsherController::class, 'calling']);
         Route::delete('/events/{event}/ushers/{usher}', [EventUsherController::class, 'destroy']);
         Route::delete('/events/{event}/ushers/{usher}/account', [EventUsherController::class, 'destroyAccount']);
+
+        Route::get('/usher-shifts', [UsherShiftController::class, 'index'])->middleware('throttle:60,1');
+        Route::get('/usher-shifts/{usherSession}', [UsherShiftController::class, 'show'])->middleware('throttle:60,1');
 
         Route::get('/ushers', [OrganizerUsherController::class, 'index']);
         Route::post('/ushers', [OrganizerUsherController::class, 'store']);

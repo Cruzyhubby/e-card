@@ -226,6 +226,7 @@ class CheckInController extends Controller
             'event_id' => $event?->id ?? $guest?->event_id ?? $fallbackEventId,
             'guest_id' => $guest?->id,
             'usher_id' => $usherId,
+            'usher_session_id' => $operator['session_id'] ?? null,
             'device_id' => $deviceId,
             'operator_name' => $operator['name'] ?? null,
             'operator_phone' => $operator['phone'] ?? null,
@@ -258,6 +259,7 @@ class CheckInController extends Controller
         }
 
         return [
+            'session_id' => (int) $session->getKey(),
             'name' => $session->name,
             'phone' => $session->phone,
             'email' => $session->email,

@@ -9,6 +9,7 @@ import DashboardPage from './pages/DashboardPage';
 import EventStudioPage from './pages/EventStudioPage';
 import GateLogsPage from './pages/GateLogsPage';
 import UshersPage from './pages/UshersPage';
+import UsherShiftsPage from './pages/UsherShiftsPage';
 import SettingsPage from './pages/SettingsPage';
 import PublicInvitationPage from './pages/PublicInvitationPage';
 import PublicDesignReviewPage from './pages/PublicDesignReviewPage';
@@ -108,6 +109,14 @@ export default function App() {
               element={
                 <RequireRole roles={['organizer']}>
                   <UshersPage />
+                </RequireRole>
+              }
+            />
+            <Route
+              path="/usher-shifts"
+              element={
+                <RequireRole roles={['organizer']}>
+                  <UsherShiftsPage />
                 </RequireRole>
               }
             />

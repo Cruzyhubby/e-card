@@ -407,7 +407,7 @@ Response `200` (validation outcome, never an exception for a bad token):
   "checked_in_at": "2026-11-08T18:42:00+01:00"
 }
 ```
-`status`: `VALID` (first successful scan, guest marked checked-in atomically), `ALREADY_CHECKED_IN` (duplicate scan, no state change), `DENIED` (unknown/cancelled/foreign-event token — logged with `validation_status: denied`). Every scan writes a `check_in_logs` row with the acting usher, device id, and attempted token.
+`status`: `VALID` (first successful scan, guest marked checked-in atomically), `ALREADY_CHECKED_IN` (duplicate scan, no state change), `DENIED` (unknown/cancelled/foreign-event token — logged with `validation_status: denied`). Every scan writes a `check_in_logs` row with the acting usher, gate device, attempted token, the `usher_session_id` of the shift, and a snapshot of the operator (name, phone, e-mail) who identified themselves at that gate.
 
 ### GET `/api/events/{event}/check-ins` (auth)
 Query (optional): `status` (`valid|already_checked_in|denied`), `limit` (default 100, max 500).
@@ -427,6 +427,42 @@ Response `200`:
 }
 ```
 Totals cover only the authenticated usher's own scans, so each gate sees its own throughput. `recent` is the latest 10 scans at that gate. Organizers and super admins receive `403`.
+
+## Usher shifts (organizer)
+
+Every scanner sign-in opens a shift row in `usher_sessions`. The operator fills in their three names, phone and e-mail after sign-in; those details live on the shift (not the shared gate account), and each scan is linked to the shift it happened in. Both endpoints return `403` for super admins and ushers, and only cover the authenticated organizer's events.
+
+### GET `/api/usher-shifts` (auth — organizer)
+
+Query (optional): `event_id`, `search` (operator name/phone/e-mail or gate label), `limit` (default 100, max 200).
+
+Response `200`:
+```json
+{
+  "data": [
+    {
+      "id": 12,
+      "gate_label": "USHER-01",
+      "account_name": "Main Gate",
+      "operator": { "name": "Amina Wanjiku Otieno", "phone": "+254 712 345 678", "email": "amina@example.com" },
+      "event": { "id": 3, "title": "Gala Night", "event_date": "2026-12-31", "accent_color": "#8B5CF6" },
+      "started_at": "2026-11-22T18:00:00+01:00",
+      "ended_at": "2026-11-22T23:10:00+01:00",
+      "active": false,
+      "duration_minutes": 310,
+      "scans": { "total": 42, "valid": 38, "duplicate": 2, "denied": 2 },
+      "last_scan_at": "2026-11-22T23:04:00+01:00"
+    }
+  ],
+  "events": [ { "id": 3, "title": "Gala Night", "event_date": "2026-12-31", "accent_color": "#8B5CF6" } ],
+  "stats": { "shifts": 8, "active": 1, "operators": 4, "scans": 312 }
+}
+```
+`operator.name` is `null` until the person at the gate completes `POST /api/auth/profile`; `ended_at` is `null` while the shift is still open.
+
+### GET `/api/usher-shifts/{usherSession}` (auth — organizer owner)
+
+Response `200`: `{ "shift": Shift, "data": [ CheckInLog, ... ] }` — up to 500 scans recorded under that shift, newest first. A session belonging to another organizer's event returns `404`.
 
 ## Gate accounts (organizer)
 

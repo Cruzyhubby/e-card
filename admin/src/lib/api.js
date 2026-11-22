@@ -281,6 +281,18 @@ export const api = {
     eventPdf: (eventId) => requestBlob(`/events/${eventId}/reports/pdf`),
   },
 
+  usherShifts: {
+    list: (options = {}) => {
+      const params = new URLSearchParams();
+      if (options.event_id) params.set('event_id', options.event_id);
+      if (options.search) params.set('search', options.search);
+      if (options.limit) params.set('limit', options.limit);
+      const query = params.toString();
+      return request(`/usher-shifts${query ? `?${query}` : ''}`);
+    },
+    get: (shiftId) => request(`/usher-shifts/${shiftId}`),
+  },
+
   ushers: {
     list: () => request('/ushers'),
     create: (payload) => request('/ushers', { method: 'POST', body: payload }),
