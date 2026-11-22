@@ -125,7 +125,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
         if (!alive.current) return null;
 
         if (!data.user || data.user.role !== 'usher') {
-          setError('This saved session is not a gate scanner account. Sign in with your usher email.');
+          setError('This saved session is not a gate scanner account. Sign in with your gate label.');
           return null;
         }
         if (!data.event) {
@@ -213,10 +213,10 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
   const handleSignIn = useCallback(async () => {
     if (busy || checking) return;
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanLabel = email.trim().toLowerCase();
 
-    if (!cleanEmail) {
-      setError('Enter the gate label from your organizer, or your e-mail.');
+    if (!cleanLabel) {
+      setError('Enter the gate label from your organizer.');
       return;
     }
     if (!password) {
@@ -250,7 +250,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
       let auth;
 
       try {
-        auth = await api.login(cleanEmail, password);
+        auth = await api.login(cleanLabel, password);
       } catch (loginError) {
         if (loginError instanceof ApiError && loginError.status === 401) {
           setError('Incorrect gate label or password.');
@@ -308,7 +308,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
     setToken('');
     setUser(null);
     setEvent(null);
-    setEmail((user && user.email) || email);
+    setEmail((user && (user.device_label || user.device_id)) || email);
     setPassword('');
     setError('');
     if (onSignOut) onSignOut();
@@ -507,12 +507,12 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
                 <>
                   <Text style={styles.cardTitle}>Sign in to your shift</Text>
                   <Text style={styles.cardCopy}>
-                    Use the gate label and password from your organizer. Your own details come next.
+                    Use the device label and password from your organizer. Your own details come next.
                   </Text>
 
                   <Field
-                    label="Gate label or e-mail"
-                    icon="mail"
+                    label="Device label"
+                    icon="door"
                     value={email}
                     onChangeText={(value) => {
                       setEmail(value);
@@ -521,7 +521,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
                     autoCapitalize="none"
                     autoCorrect={false}
                     autoComplete="username"
-                    placeholder="Gate A or you@example.com"
+                    placeholder="e.g. Main Gate"
                   />
                   <Field
                     label="Gate password"

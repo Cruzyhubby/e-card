@@ -336,7 +336,13 @@ class AuthController extends Controller
         }
 
         if (str_contains($identifier, '@')) {
-            return User::query()->where('email', Str::lower($identifier))->first();
+            // E-mail identifies console accounts only. Shared gate accounts are
+            // opened with the device label so every shift starts from the label
+            // the organizer assigned, never a personal address.
+            return User::query()
+                ->where('email', Str::lower($identifier))
+                ->where('role', '!=', 'usher')
+                ->first();
         }
 
         // Gate accounts sign in with the device label the organizer assigned;

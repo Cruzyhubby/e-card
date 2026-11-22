@@ -35,7 +35,7 @@ The app talks only to `GET /api/ping`, `POST /api/auth/login`, `GET /api/auth/me
 
 1. The organizer opens **Event Studio → Gate & ushers** and creates a gate account with just a **gate label** (e.g. `GATE-01`) and a **password**.
 2. The organizer shares the label and password with the ushers at that entrance.
-3. The usher enters the **gate label or e-mail** and **gate password**, then taps **Sign in**.
+3. The usher enters the **device label** and **gate password**, then taps **Sign in**. E-mail addresses are not accepted on the scanner.
 4. The app opens **Who is scanning?** — the person enters their own full names (first, middle, last), phone number and e-mail. These identify them in the scan log; the gate account itself stays shared.
 5. **Start scanning**. The account is scoped to that event on the server, so passes from other events return DENIED.
 

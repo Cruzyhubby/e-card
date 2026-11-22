@@ -48,7 +48,7 @@ All timestamps are ISO 8601 (`2026-11-08T18:42:00+01:00`). Dates are `YYYY-MM-DD
   "created_at": "2026-11-06T09:12:00+01:00"
 }
 ```
-Usher accounts are ordinary user accounts managed by the organizer. They sign in from the scanner app with their **gate label** and password (email still works as a fallback), and never expose token fields. `calling_enabled` tells the app whether to show the Calls tab. Suspending or deleting the account revokes all of its sessions.
+Usher accounts are ordinary user accounts managed by the organizer. They sign in from the scanner app with their **device label** and password only — an e-mail never opens a gate account — and never expose token fields. `calling_enabled` tells the app whether to show the Calls tab. Suspending or deleting the account revokes all of its sessions.
 
 ### E-card config
 ```json
@@ -142,7 +142,7 @@ Any other JSON shape means the URL points at a different service.
 ## Auth
 
 ### POST `/api/auth/login`
-Body: `{ "login": "GATE-01", "password": "...", "two_factor_code": "123456" }` — `login` may be a gate label or an e-mail; `email` is accepted as an alias and one of the two is required. `two_factor_code` is only needed for console accounts that enabled two-factor authentication.
+Body: `{ "login": "Main Gate", "password": "...", "two_factor_code": "123456" }` — console accounts (organizer, super admin) sign in with `login` set to their e-mail, or use the `email` alias; one of the two is required. Ushers sign in from the scanner with the **device label** the organizer assigned — an e-mail never opens a gate account. `two_factor_code` is only needed for console accounts that enabled two-factor authentication.
 Response `200`: `{ "token": "1|plaintext...", "user": User, "event": Event | null }`
 
 Every role signs in here, including ushers from the scanner app. Gate accounts sign in with their label; `event` is populated only for ushers and is the single event their account is scoped to. Only active accounts with a valid assignment authenticate: suspended accounts and ushers without an event return `403` and receive no token; wrong credentials return `422`. Login is throttled to 5 attempts per minute per identifier + IP (`429` after that). An usher sign-in revokes that account's earlier tokens, so only one gate session stays active.
