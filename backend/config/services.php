@@ -27,8 +27,11 @@ return [
 
     'sms' => [
         'provider' => env('SMS_PROVIDER', 'kilakona'),
-        'base_url' => env('KILAKONA_BASE_URL', 'https://api.kilakona.co.tz'),
+        'base_url' => env('KILAKONA_BASE_URL', 'https://messaging.kilakona.co.tz'),
+        'send_path' => env('KILAKONA_SEND_PATH', '/api/v1/vendor/message/send'),
         'api_key' => env('KILAKONA_API_KEY'),
+        'api_secret' => env('KILAKONA_API_SECRET'),
         'sender_id' => env('KILAKONA_SENDER_ID'),
+        'country_code' => env('KILAKONA_COUNTRY_CODE', '255'),
     ],
 ];

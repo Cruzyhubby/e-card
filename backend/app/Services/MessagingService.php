@@ -160,8 +160,9 @@ class MessagingService
         $provider = trim((string) $this->platformValue('sms.provider', (string) config('services.sms.provider', 'kilakona')));
         $driver = $this->driver();
         $apiKey = trim((string) $this->platformValue('sms.api_key', (string) config('services.sms.api_key', '')));
+        $apiSecret = trim((string) $this->platformValue('sms.api_secret', (string) config('services.sms.api_secret', '')));
 
-        if ($driver !== 'live' || $provider !== 'kilakona' || $apiKey === '') {
+        if ($driver !== 'live' || $provider !== 'kilakona' || $apiKey === '' || $apiSecret === '') {
             Log::info('SMS invitation dispatched through the log driver.', [
                 'event_id' => $event->id,
                 'guest_id' => $guest->id,
@@ -172,33 +173,50 @@ class MessagingService
             return null;
         }
 
-        $countryCode = trim((string) $this->settings->get('sms.country_code', '255'));
+        $countryCode = trim((string) $this->settings->get('sms.country_code', (string) config('services.sms.country_code', '255')));
         $phone = $this->normalizeWithCountryCode($recipient, $countryCode !== '' ? $countryCode : '255');
 
         if ($phone === null) {
             throw new RuntimeException('Guest phone number cannot be used for SMS.');
         }
 
-        $baseUrl = rtrim((string) $this->settings->get('sms.base_url', (string) config('services.sms.base_url', 'https://api.kilakona.co.tz')), '/');
-        $path = '/'.ltrim((string) $this->settings->get('sms.send_path', '/api/v1/sms/send'), '/');
+        $baseUrl = rtrim((string) $this->platformValue('sms.base_url', (string) config('services.sms.base_url', 'https://messaging.kilakona.co.tz')), '/');
+        $path = '/'.ltrim((string) $this->platformValue('sms.send_path', (string) config('services.sms.send_path', '/api/v1/vendor/message/send')), '/');
         $senderId = trim((string) $this->platformValue('sms.sender_id', (string) config('services.sms.sender_id', '')));
 
-        $response = Http::withToken($apiKey)
+        if ($senderId === '') {
+            throw new RuntimeException('Kilakona sender ID is not configured.');
+        }
+
+        $response = Http::withHeaders([
+            'api_key' => $apiKey,
+            'api_secret' => $apiSecret,
+        ])
             ->acceptJson()
             ->timeout(20)
             ->post($baseUrl.$path, [
-                'sender_id' => $senderId,
-                'recipient' => $phone,
+                'senderId' => $senderId,
+                'messageType' => 'text',
                 'message' => $message,
+                'contacts' => $phone,
             ]);
 
-        if ($response->failed()) {
+        $payload = $response->json();
+
+        if ($response->failed() || ! is_array($payload) || ($payload['success'] ?? false) !== true) {
             throw new RuntimeException('Kilakona SMS API error: '.$response->body());
         }
 
-        $providerMessageId = $response->json('data.id')
-            ?? $response->json('message_id')
-            ?? $response->json('id');
+        $validContacts = $payload['data']['validContacts'] ?? null;
+
+        if (is_numeric($validContacts) && (int) $validContacts < 1) {
+            throw new RuntimeException('Kilakona rejected the recipient phone number.');
+        }
+
+        $providerMessageId = $payload['data']['shootId']
+            ?? $payload['data']['id']
+            ?? $payload['message_id']
+            ?? $payload['id'];
 
         return is_scalar($providerMessageId) ? (string) $providerMessageId : null;
     }

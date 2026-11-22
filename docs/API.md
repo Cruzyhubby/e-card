@@ -318,7 +318,7 @@ Response `200`:
 Downloads the CSV import template with the accepted headers.
 
 ### POST `/api/guests/{guest}/send` (auth)
-Body: `{ "channel": "whatsapp" | "sms" | "email" }`. Response `200`: `{ "guest": Guest, "message": "Hi Ada, you're invited to ..." }`. SMS uses the Kilakona gateway configured in platform settings; the log driver records deliveries without contacting the provider.
+Body: `{ "channel": "whatsapp" | "sms" | "email" }`. Response `200`: `{ "guest": Guest, "message": "Hi Ada, you're invited to ..." }`. SMS uses the Kilakona gateway configured in platform settings (`api_key` and `api_secret` headers, `senderId` + `contacts` body); the log driver records deliveries without contacting the provider.
 
 ## E-cards & public invitations
 

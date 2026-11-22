@@ -81,7 +81,7 @@ organizer account you already use locally. `DemoSeeder` refuses to run when `APP
 
 1. Change the organizer and super-admin passwords (demo passwords are documented in this project's history and must never be reused).
 2. Settings → **Two-factor authentication** → enable it for the organizer and for the account page's super admin. Save the recovery codes offline.
-3. Settings → confirm the WhatsApp/SMS driver stays on `log` until real Kilakona credentials exist.
+3. Settings → **SMS gateway (Kilakona)** → confirm the API key, API secret, sender ID, and that the base URL is `https://messaging.kilakona.co.tz`. Leave delivery mode on `log` until you are ready to spend SMS credits, then switch it to `live`.
 4. Create one test event/guest and confirm it appears in Supabase → Table Editor.
 
 `render.yaml` sets `SESSION_SECURE_COOKIE=true` and `SESSION_ENCRYPT=true`. Render is detected

@@ -61,4 +61,6 @@ services:
       - key: SMS_PROVIDER
         value: kilakona
       - key: KILAKONA_BASE_URL
-        value: https://api.kilakona.co.tz
+        value: https://messaging.kilakona.co.tz
+      - key: KILAKONA_SEND_PATH
+        value: /api/v1/vendor/message/send

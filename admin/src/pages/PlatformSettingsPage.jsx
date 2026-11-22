@@ -147,9 +147,9 @@ export default function PlatformSettingsPage() {
     .flatMap((group) => group.fields)
     .find((field) => field.key === 'mail.host')?.has_value;
   const smsProvider = values['sms.provider'];
-  const smsStored = groups
-    .flatMap((group) => group.fields)
-    .find((field) => field.key === 'sms.api_key')?.has_value;
+  const smsStored =
+    groups.flatMap((group) => group.fields).find((field) => field.key === 'sms.api_key')?.has_value &&
+    groups.flatMap((group) => group.fields).find((field) => field.key === 'sms.api_secret')?.has_value;
 
   return (
     <form onSubmit={save} className="space-y-6">
@@ -193,7 +193,7 @@ export default function PlatformSettingsPage() {
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
           <p className="text-[11px] leading-relaxed text-amber-100/80">
             Live mode is selected but no provider credentials are stored. Add the WhatsApp token and phone number ID,
-            the Kilakona API key, and/or SMTP host before dispatching invitations.
+            the Kilakona API key and secret, and/or SMTP host before dispatching invitations.
           </p>
         </div>
       ) : null}
@@ -313,7 +313,7 @@ export default function PlatformSettingsPage() {
               <div className="flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-3">
                 <div>
                   <p className="text-xs font-semibold text-slate-200">SMS (Kilakona)</p>
-                  <p className="text-[10px] text-slate-500">API key and sender ID storage.</p>
+                  <p className="text-[10px] text-slate-500">API key, secret, and sender ID storage.</p>
                 </div>
                 <Badge tone={smsProvider === 'kilakona' ? 'gold' : smsStored ? 'emerald' : 'slate'} dot>
                   {smsProvider === 'kilakona' ? (smsStored ? 'Live' : 'Key missing') : 'Log'}
