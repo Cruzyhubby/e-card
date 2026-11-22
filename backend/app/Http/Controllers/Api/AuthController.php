@@ -7,6 +7,7 @@ use App\Http\Resources\EventResource;
 use App\Http\Resources\UserResource;
 use App\Models\Event;
 use App\Models\User;
+use App\Models\UsherSession;
 use App\Services\AuditLogger;
 use App\Services\TwoFactorService;
 use Illuminate\Http\JsonResponse;
@@ -124,10 +125,26 @@ class AuthController extends Controller
 
         if ($user->isUsher()) {
             // One active device per gate account: a new sign-in ends the old one.
+            UsherSession::query()
+                ->where('user_id', $user->id)
+                ->whereNull('ended_at')
+                ->update(['ended_at' => now()]);
             $user->tokens()->delete();
         }
 
-        $token = $user->createToken('eclat-'.$user->role)->plainTextToken;
+        $newToken = $user->createToken('eclat-'.$user->role);
+        $token = $newToken->plainTextToken;
+
+        if ($user->isUsher()) {
+            // The account belongs to the organizer and stays untouched; this row
+            // records the person operating the gate for this shift.
+            UsherSession::create([
+                'user_id' => $user->id,
+                'event_id' => $user->currentAssignedEventId(),
+                'personal_access_token_id' => $newToken->accessToken->getKey(),
+                'started_at' => now(),
+            ]);
+        }
 
         AuditLogger::record(
             'auth.login',
@@ -144,6 +161,7 @@ class AuthController extends Controller
             'event' => $user->isUsher() && $user->event !== null
                 ? new EventResource($user->event)
                 : null,
+            'operator' => null,
         ]);
     }
 
@@ -162,6 +180,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => new UserResource($user),
             'event' => $event !== null ? new EventResource($event) : null,
+            'operator' => $this->operatorForRequest($request, $user),
         ]);
     }
 
@@ -195,20 +214,25 @@ class AuthController extends Controller
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($user->id),
             ],
             'phone' => ['required', 'string', 'max:32'],
         ]);
 
-        $user->forceFill([
+        // The gate account belongs to the organizer. The person using it for
+        // this shift is recorded separately, so the account keeps its label.
+        $session = $this->currentUsherSession($request, $user);
+
+        $session?->forceFill([
             'name' => trim($data['name']),
-            'email' => strtolower(trim($data['email'])),
             'phone' => trim($data['phone']),
+            'email' => strtolower(trim($data['email'])),
         ])->save();
 
+        $gate = $user->device_label ?? $user->device_id ?? 'the gate';
+
         AuditLogger::record(
-            'auth.usher_profile_completed',
-            $user->name.' entered their details on the gate scanner.',
+            'auth.usher_identified',
+            trim($data['name']).' identified themselves at "'.$gate.'".',
             'User',
             $user->id,
             [],
@@ -217,6 +241,7 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => new UserResource($user->refresh()),
+            'operator' => $this->operatorPayload($session),
         ]);
     }
 
@@ -323,10 +348,69 @@ class AuthController extends Controller
         );
 
         if ($token instanceof PersonalAccessToken) {
+            UsherSession::query()
+                ->where('personal_access_token_id', $token->getKey())
+                ->whereNull('ended_at')
+                ->update(['ended_at' => now()]);
             $token->delete();
         }
 
         return response()->noContent();
+    }
+
+    private function currentUsherSession(Request $request, User $user): ?UsherSession
+    {
+        $token = $request->user()?->currentAccessToken();
+
+        if (! $token instanceof PersonalAccessToken) {
+            return null;
+        }
+
+        return UsherSession::query()->firstOrCreate(
+            ['personal_access_token_id' => $token->getKey()],
+            [
+                'user_id' => $user->id,
+                'event_id' => $user->currentAssignedEventId(),
+                'started_at' => now(),
+            ]
+        );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function operatorForRequest(Request $request, User $user): ?array
+    {
+        if (! $user->isUsher()) {
+            return null;
+        }
+
+        $token = $request->user()?->currentAccessToken();
+
+        if (! $token instanceof PersonalAccessToken) {
+            return null;
+        }
+
+        return $this->operatorPayload(
+            UsherSession::query()->where('personal_access_token_id', $token->getKey())->first()
+        );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function operatorPayload(?UsherSession $session): ?array
+    {
+        if ($session === null || $session->name === null) {
+            return null;
+        }
+
+        return [
+            'name' => $session->name,
+            'phone' => $session->phone,
+            'email' => $session->email,
+            'started_at' => $session->started_at?->toIso8601String(),
+        ];
     }
 
     private function findByLogin(string $identifier): ?User

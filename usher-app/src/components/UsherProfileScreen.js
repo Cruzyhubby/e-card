@@ -67,7 +67,7 @@ export default function UsherProfileScreen({ baseUrl, token, user, onDone, onCan
         phone: cleanPhone,
         email: cleanEmail,
       });
-      if (alive.current) onDone(data.user);
+      if (alive.current) onDone(data.user, data.operator || null);
     } catch (err) {
       if (!alive.current) return;
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {

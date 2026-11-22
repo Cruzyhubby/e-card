@@ -19,7 +19,12 @@ class CheckInLogResource extends JsonResource
             'guest_name' => $this->guest?->name,
             'table_number' => $this->guest?->table_number,
             'usher_id' => $this->usher_id !== null ? (int) $this->usher_id : null,
-            'usher_name' => $this->usher?->name,
+            'usher_name' => $this->operator_name ?? $this->usher?->name,
+            'operator' => $this->operator_name !== null ? [
+                'name' => $this->operator_name,
+                'phone' => $this->operator_phone,
+                'email' => $this->operator_email,
+            ] : null,
             'device_id' => $this->device_id,
             'validation_status' => $this->validation_status,
             'token_attempted' => $this->token_attempted,

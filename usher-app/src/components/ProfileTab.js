@@ -34,6 +34,7 @@ export default function ProfileTab({ user, event, deviceId, onChangePassword, on
 
         <View style={styles.kvList}>
           <Row label="Email" value={email} />
+          <Row label="Phone" value={(user && user.phone) || '—'} />
           <Row label="Active event" value={event.title || '—'} />
           <Row label="Event date" value={when || '—'} />
           <Row label="Venue" value={event.venue || '—'} />

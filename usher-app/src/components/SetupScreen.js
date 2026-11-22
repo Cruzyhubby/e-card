@@ -39,6 +39,19 @@ function sessionFrom(initial) {
   };
 }
 
+function withOperator(user, operator) {
+  if (!user || !operator) return user;
+
+  // The gate account keeps its organizer-owned label; the person on shift is
+  // shown with their own names, phone and e-mail.
+  return {
+    ...user,
+    name: operator.name || user.name,
+    phone: operator.phone || user.phone,
+    email: operator.email || user.email,
+  };
+}
+
 function offlineMessage(baseUrl) {
   if (!__DEV__) {
     return 'No connection to the gate server. Check that you are on the venue Wi-Fi, then tap RETRY.';
@@ -135,13 +148,20 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
 
         setBaseUrl(root);
 
+        // A token without a person attached (fresh install, app killed during
+        // the profile step) must identify the operator before scanning.
+        if (!data.operator) {
+          setPendingProfile({ token: cleanToken, user: data.user, event: data.event });
+          return null;
+        }
+
         if (data.user.must_change_password) {
-          setPending({ token: cleanToken, user: data.user, event: data.event });
+          setPending({ token: cleanToken, user: data.user, event: data.event, operator: data.operator });
           return null;
         }
 
         setToken(cleanToken);
-        setUser(data.user);
+        setUser(withOperator(data.user, data.operator));
         setEvent(data.event);
         setError('');
         return data;
@@ -354,17 +374,17 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
         baseUrl={baseUrl}
         token={pendingProfile.token}
         user={pendingProfile.user}
-        onDone={(updatedUser) => {
+        onDone={(updatedUser, operator) => {
           const next = pendingProfile;
           setPendingProfile(null);
 
           if (updatedUser && updatedUser.must_change_password) {
-            setPending({ token: next.token, user: updatedUser, event: next.event });
+            setPending({ token: next.token, user: updatedUser, event: next.event, operator });
             return;
           }
 
           setToken(next.token);
-          setUser(updatedUser);
+          setUser(withOperator(updatedUser, operator));
           setEvent(next.event);
         }}
         onSessionExpired={() => {
@@ -395,7 +415,7 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
         name={pending.user && pending.user.name}
         onDone={(updatedUser) => {
           setToken(pending.token);
-          setUser(updatedUser);
+          setUser(withOperator(updatedUser, pending.operator));
           setEvent(pending.event);
           setPending(null);
           setError('');

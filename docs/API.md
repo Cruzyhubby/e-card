@@ -120,7 +120,8 @@ Constraints: `bg_color`, `accent_color`, `text_color` are hex `#RRGGBB`; `name_y
   "guest_name": "Ada Nwosu",
   "table_number": 4,
   "usher_id": 3,
-  "usher_name": "Gate 01",
+  "usher_name": "Amina Wanjiku Otieno",
+  "operator": { "name": "Amina Wanjiku Otieno", "phone": "+254 712 345 678", "email": "amina@example.com" },
   "device_id": "USHER-01",
   "validation_status": "valid",
   "token_attempted": null,
@@ -143,7 +144,7 @@ Any other JSON shape means the URL points at a different service.
 
 ### POST `/api/auth/login`
 Body: `{ "login": "Main Gate", "password": "...", "two_factor_code": "123456" }` — console accounts (organizer, super admin) sign in with `login` set to their e-mail, or use the `email` alias; one of the two is required. Ushers sign in from the scanner with the **device label** the organizer assigned — an e-mail never opens a gate account. `two_factor_code` is only needed for console accounts that enabled two-factor authentication.
-Response `200`: `{ "token": "1|plaintext...", "user": User, "event": Event | null }`
+Response `200`: `{ "token": "1|plaintext...", "user": User, "event": Event | null, "operator": null }`
 
 Every role signs in here, including ushers from the scanner app. Gate accounts sign in with their label; `event` is populated only for ushers and is the single event their account is scoped to. Only active accounts with a valid assignment authenticate: suspended accounts and ushers without an event return `403` and receive no token; wrong credentials return `422`. Login is throttled to 5 attempts per minute per identifier + IP (`429` after that). An usher sign-in revokes that account's earlier tokens, so only one gate session stays active.
 
@@ -171,6 +172,15 @@ Updates the signed-in organizer or super-admin console account.
 { "name": "Amina Hassan", "email": "amina@example.com", "phone": "+255 754 000 000" }
 ```
 `name` and `email` are required; `email` must be unique across users (the account's own address is allowed). `phone` is optional and is left untouched when omitted. Response `200`: `{ "user": User }`. Duplicate e-mail returns `422`. Ushers use `POST /api/auth/profile` instead; any other role receives `403`.
+
+### POST `/api/auth/profile` (usher)
+The person operating a shared gate account identifies themselves for this shift:
+```json
+{ "name": "Amina Wanjiku Otieno", "phone": "+254 712 345 678", "email": "amina@example.com" }
+```
+`name` must contain at least three names; `phone` and a valid `email` are required. The gate account itself is **not modified** — it stays owned by the organizer with its device label and internal e-mail. The details are stored on the `usher_sessions` row attached to the current bearer token, and every scan made with that token records a snapshot of `operator_name`, `operator_phone` and `operator_email` in the check-in log. Response `200`: `{ "user": User, "operator": { "name", "phone", "email", "started_at" } }`.
+
+`GET /api/auth/me` returns the same `operator` object (`null` until the profile step is complete). A new sign-in always starts without an operator, so the scanner asks again on every login.
 
 ### POST `/api/auth/password` (auth)
 ```json

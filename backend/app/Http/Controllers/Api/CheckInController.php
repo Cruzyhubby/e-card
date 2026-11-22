@@ -10,9 +10,11 @@ use App\Http\Resources\GuestResource;
 use App\Models\CheckInLog;
 use App\Models\Event;
 use App\Models\Guest;
+use App\Models\UsherSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class CheckInController extends Controller
 {
@@ -31,15 +33,16 @@ class CheckInController extends Controller
         $scopedEventId = $user->isUsher() ? $user->currentAssignedEventId() : null;
         $deviceId = $data['device_id'] ?? $user->device_id ?? 'USHER-APP';
         $ipAddress = $request->ip();
+        $operator = $this->operatorSnapshot($request);
 
-        $outcome = DB::transaction(function () use ($token, $user, $deviceId, $ipAddress, $scopedEventId): array {
+        $outcome = DB::transaction(function () use ($token, $user, $deviceId, $ipAddress, $scopedEventId, $operator): array {
             $guest = Guest::query()
                 ->whereQrToken($token)
                 ->lockForUpdate()
                 ->first();
 
             if ($guest === null) {
-                $this->writeLog(null, null, $user?->id, $deviceId, $token, 'denied', $ipAddress, $scopedEventId);
+                $this->writeLog(null, null, $user?->id, $deviceId, $token, 'denied', $ipAddress, $scopedEventId, $operator);
 
                 return [
                     'status' => 'DENIED',
@@ -55,7 +58,7 @@ class CheckInController extends Controller
             $event = $guest->event;
 
             if ($scopedEventId !== null && (int) $event->id !== $scopedEventId) {
-                $this->writeLog(null, null, $user->id, $deviceId, $token, 'denied', $ipAddress, $scopedEventId);
+                $this->writeLog(null, null, $user->id, $deviceId, $token, 'denied', $ipAddress, $scopedEventId, $operator);
 
                 return [
                     'status' => 'DENIED',
@@ -69,7 +72,7 @@ class CheckInController extends Controller
 
             if ($user->isOrganizer() && (int) $event->user_id !== (int) $user->id) {
                 // Never attach another organizer's guest event to this log row.
-                $this->writeLog(null, null, $user->id, $deviceId, $token, 'denied', $ipAddress);
+                $this->writeLog(null, null, $user->id, $deviceId, $token, 'denied', $ipAddress, null, $operator);
 
                 return [
                     'status' => 'DENIED',
@@ -82,7 +85,7 @@ class CheckInController extends Controller
             }
 
             if ($guest->status === 'cancelled') {
-                $this->writeLog($guest, $event, $user?->id, $deviceId, $token, 'denied', $ipAddress);
+                $this->writeLog($guest, $event, $user?->id, $deviceId, $token, 'denied', $ipAddress, null, $operator);
 
                 return [
                     'status' => 'DENIED',
@@ -95,7 +98,7 @@ class CheckInController extends Controller
             }
 
             if ($guest->status === 'checked_in') {
-                $this->writeLog($guest, $event, $user?->id, $deviceId, $token, 'already_checked_in', $ipAddress);
+                $this->writeLog($guest, $event, $user?->id, $deviceId, $token, 'already_checked_in', $ipAddress, null, $operator);
 
                 $checkedInAt = $guest->checked_in_at;
 
@@ -118,7 +121,7 @@ class CheckInController extends Controller
                 'checked_in_at' => $checkedInAt,
             ]);
 
-            $this->writeLog($guest, $event, $user?->id, $deviceId, $token, 'valid', $ipAddress);
+            $this->writeLog($guest, $event, $user?->id, $deviceId, $token, 'valid', $ipAddress, null, $operator);
 
             $message = 'Welcome, '.$guest->name.'.';
 
@@ -216,19 +219,49 @@ class CheckInController extends Controller
         string $token,
         string $validationStatus,
         ?string $ipAddress,
-        ?int $fallbackEventId = null
+        ?int $fallbackEventId = null,
+        ?array $operator = null
     ): void {
         CheckInLog::create([
             'event_id' => $event?->id ?? $guest?->event_id ?? $fallbackEventId,
             'guest_id' => $guest?->id,
             'usher_id' => $usherId,
             'device_id' => $deviceId,
+            'operator_name' => $operator['name'] ?? null,
+            'operator_phone' => $operator['phone'] ?? null,
+            'operator_email' => $operator['email'] ?? null,
             // A scanned token is a guest credential: keep the guest link, never the raw secret.
             'token_attempted' => $guest !== null ? null : $this->maskToken($token),
             'validation_status' => $validationStatus,
             'scanned_at' => now(),
             'ip_address' => $ipAddress,
         ]);
+    }
+
+    /**
+     * @return array<string, string|null>|null
+     */
+    private function operatorSnapshot(Request $request): ?array
+    {
+        $token = $request->user()?->currentAccessToken();
+
+        if (! $token instanceof PersonalAccessToken) {
+            return null;
+        }
+
+        $session = UsherSession::query()
+            ->where('personal_access_token_id', $token->getKey())
+            ->first();
+
+        if ($session === null || $session->name === null) {
+            return null;
+        }
+
+        return [
+            'name' => $session->name,
+            'phone' => $session->phone,
+            'email' => $session->email,
+        ];
     }
 
     private function maskToken(string $token): string

@@ -36,7 +36,7 @@ The app talks only to `GET /api/ping`, `POST /api/auth/login`, `GET /api/auth/me
 1. The organizer opens **Event Studio → Gate & ushers** and creates a gate account with just a **gate label** (e.g. `GATE-01`) and a **password**.
 2. The organizer shares the label and password with the ushers at that entrance.
 3. The usher enters the **device label** and **gate password**, then taps **Sign in**. E-mail addresses are not accepted on the scanner.
-4. The app opens **Who is scanning?** — the person enters their own full names (first, middle, last), phone number and e-mail. These identify them in the scan log; the gate account itself stays shared.
+4. The app opens **Who is scanning?** — the person enters their own full names (first, middle, last), phone number and e-mail. These are stored as that shift's operator details; the organizer-owned gate account keeps its label and is never overwritten. Every scan records the operator snapshot in the gate log.
 5. **Start scanning**. The account is scoped to that event on the server, so passes from other events return DENIED.
 
 Legacy e-mail accounts with `must_change_password` still get the **Set a new password** screen before the scanner opens.
