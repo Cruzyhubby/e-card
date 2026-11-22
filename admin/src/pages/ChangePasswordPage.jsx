@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff, KeyRound, LogOut, ShieldCheck } from 'lucide-react';
+import Brand from '../components/Brand';
 import { Field, Input } from '../components/ui/Field';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -61,18 +62,12 @@ export default function ChangePasswordPage() {
     <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-10">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-32 -top-40 h-[38rem] w-[38rem] animate-aurora rounded-full bg-accent-600/20 blur-[120px]" />
-        <div className="absolute -right-24 top-1/3 h-[30rem] w-[30rem] animate-aurora rounded-full bg-fuchsia-600/10 blur-[110px] [animation-delay:-6s]" />
+        <div className="absolute -right-24 top-1/3 h-[30rem] w-[30rem] animate-aurora rounded-full bg-forest-400/10 blur-[110px] [animation-delay:-6s]" />
       </div>
 
       <div className="relative w-full max-w-[460px] animate-fade-up">
-        <div className="mb-7 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-accent-400 via-accent-500 to-fuchsia-600 shadow-glow">
-            <span className="font-serif text-2xl leading-none text-white">É</span>
-          </div>
-          <div>
-            <p className="font-serif text-[26px] leading-none text-white">Éclat</p>
-            <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.3em] text-slate-500">Event suite</p>
-          </div>
+        <div className="mb-7">
+          <Brand size="lg" />
         </div>
 
         <div className="panel relative overflow-hidden p-6 sm:p-8">

@@ -1,6 +1,6 @@
-# Éclat API (Laravel 12)
+# Fahari Creative API (Laravel 12)
 
-Backend for **Éclat**, a multi-event e-card and invitation management system. Implements the contract in `../docs/API.md`: Sanctum bearer auth, events, guests, CSV import, WhatsApp/e-mail dispatch, public SVG e-cards and an atomic usher check-in endpoint.
+Backend for **Fahari Creative**, a multi-event e-card and invitation management system. Implements the contract in `../docs/API.md`: Sanctum bearer auth, events, guests, CSV import, WhatsApp/e-mail dispatch, public SVG e-cards and an atomic usher check-in endpoint.
 
 Verified on PHP 8.3 with Postgres 18 (PGlite): `schema.sql` applied through PDO with RLS on all 9 tables, `migrate:fresh --seed` from the migrations, and a 35-case API suite (login with mixed-case e-mail, `whereLike` search, VIP aggregates, invitation JSON/SVG/portal, check-in VALID → ALREADY_CHECKED_IN → DENIED, non-UUID tokens, usher scoping and forced password change, platform console and audit search). Earlier builds were regression-tested on MySQL 8.4.
 

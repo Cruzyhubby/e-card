@@ -224,7 +224,7 @@ export default function GatePassesTab({ event }) {
           <div>
             <h2 className="text-sm font-bold text-white">Gate accounts for this event</h2>
             <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-slate-500">
-              Create a gate login with a label and password. Ushers sign in to the Éclat Gate app, add their own
+              Create a gate login with a label and password. Ushers sign in to the Fahari Gate app, add their own
               details, and can only scan <span className="text-slate-300">{event.title}</span>.
             </p>
           </div>

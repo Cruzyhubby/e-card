@@ -29,29 +29,29 @@ class EcardRendererService
      */
     private const TEMPLATE_PALETTES = [
         'noir' => [
-            'bg_color' => '#0B1120',
-            'accent_color' => '#C084FC',
-            'text_color' => '#F8FAFC',
+            'bg_color' => '#08120E',
+            'accent_color' => '#C49A3C',
+            'text_color' => '#FDFAF3',
         ],
         'ivory' => [
-            'bg_color' => '#FBF7F0',
-            'accent_color' => '#B08D57',
-            'text_color' => '#2A241C',
+            'bg_color' => '#FDFAF3',
+            'accent_color' => '#A87F2E',
+            'text_color' => '#2E2A24',
         ],
         'emerald' => [
-            'bg_color' => '#062C26',
-            'accent_color' => '#6EE7B7',
-            'text_color' => '#ECFDF5',
+            'bg_color' => '#152B22',
+            'accent_color' => '#E2C97E',
+            'text_color' => '#FDFAF3',
         ],
         'terracotta' => [
-            'bg_color' => '#3B1F16',
-            'accent_color' => '#E8A87C',
-            'text_color' => '#FFF4EC',
+            'bg_color' => '#2B1210',
+            'accent_color' => '#D08A6A',
+            'text_color' => '#FDFAF3',
         ],
         'royal' => [
-            'bg_color' => '#1E1B4B',
-            'accent_color' => '#F5D67B',
-            'text_color' => '#F8FAFC',
+            'bg_color' => '#1E3D2F',
+            'accent_color' => '#E2C97E',
+            'text_color' => '#FDFAF3',
         ],
     ];
 

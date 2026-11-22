@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
+import Brand from '../components/Brand';
 import EcardPreview from '../components/ui/EcardPreview';
 import { Field, Input } from '../components/ui/Field';
 import { useAuth } from '../context/AuthContext';
@@ -34,7 +35,7 @@ const SAMPLE_GUEST = {
   name: 'Adaeze Nwosu',
   table_number: 4,
   seat_number: 2,
-  qr_token: 'eclat-login-preview',
+  qr_token: 'fahari-login-preview',
 };
 
 const FEATURES = [
@@ -166,22 +167,16 @@ export default function LoginPage() {
     <div className="relative min-h-dvh overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-32 -top-40 h-[38rem] w-[38rem] animate-aurora rounded-full bg-accent-600/20 blur-[120px]" />
-        <div className="absolute -right-24 top-1/3 h-[30rem] w-[30rem] animate-aurora rounded-full bg-fuchsia-600/10 blur-[110px] [animation-delay:-6s]" />
-        <div className="absolute bottom-0 left-1/3 h-[24rem] w-[24rem] rounded-full bg-sky-500/[0.07] blur-[100px]" />
+        <div className="absolute -right-24 top-1/3 h-[30rem] w-[30rem] animate-aurora rounded-full bg-forest-400/10 blur-[110px] [animation-delay:-6s]" />
+        <div className="absolute bottom-0 left-1/3 h-[24rem] w-[24rem] rounded-full bg-gold/[0.06] blur-[100px]" />
       </div>
 
       <div className="relative mx-auto grid min-h-dvh max-w-[1400px] lg:grid-cols-[1.1fr_0.9fr]">
         <section className="relative hidden flex-col justify-between overflow-hidden border-r border-white/[0.06] px-12 py-10 lg:flex xl:px-16">
           <div className="pointer-events-none absolute inset-0 bg-grid opacity-70" />
 
-          <div className="relative flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-accent-400 via-accent-500 to-fuchsia-600 shadow-glow">
-              <span className="font-serif text-2xl leading-none text-white">É</span>
-            </div>
-            <div>
-              <p className="font-serif text-[28px] leading-none text-white">Éclat</p>
-              <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.3em] text-slate-500">Event suite</p>
-            </div>
+          <div className="relative">
+            <Brand size="lg" />
           </div>
 
           <div className="relative mt-12 grid flex-1 items-center gap-10 xl:grid-cols-[1.05fr_0.95fr]">
@@ -255,19 +250,13 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <p className="relative text-[11px] text-slate-600">© 2026 Éclat. Crafted for unforgettable events.</p>
+          <p className="relative text-[11px] text-slate-600">© 2026 Fahari Creative. We are crafting.</p>
         </section>
 
         <section className="flex min-h-dvh items-center justify-center px-5 py-10 sm:px-8">
           <div className="w-full max-w-[420px] animate-fade-up">
-            <div className="mb-8 flex items-center gap-3 lg:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-400 via-accent-500 to-fuchsia-600">
-                <span className="font-serif text-2xl leading-none text-white">É</span>
-              </div>
-              <div>
-                <p className="font-serif text-2xl leading-none text-white">Éclat</p>
-                <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.3em] text-slate-500">Event suite</p>
-              </div>
+            <div className="mb-8 lg:hidden">
+              <Brand size="lg" />
             </div>
 
             <div className="panel relative overflow-hidden p-6 sm:p-8">

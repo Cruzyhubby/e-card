@@ -79,12 +79,12 @@ export const initials = (name = '') =>
     .toUpperCase() || 'G';
 
 const AVATAR_PALETTES = [
-  'from-violet-500/80 to-indigo-600/80',
-  'from-rose-500/80 to-fuchsia-600/80',
-  'from-amber-400/80 to-orange-600/80',
-  'from-emerald-400/80 to-teal-600/80',
-  'from-sky-400/80 to-blue-600/80',
-  'from-purple-400/80 to-rose-500/80',
+  'from-accent-500/80 to-forest-500/80',
+  'from-forest-400/80 to-accent-600/80',
+  'from-amber-400/80 to-accent-600/80',
+  'from-emerald-400/80 to-forest-500/80',
+  'from-teal-400/80 to-forest-400/80',
+  'from-slate-400/80 to-accent-500/80',
 ];
 
 export const avatarGradient = (name = '') => {
@@ -202,7 +202,7 @@ export const hslToHex = (h, s, l) => {
 
 export const fakeQrMatrix = (seed = '', size = 25) => {
   let hash = 2166136261;
-  const input = seed || 'eclat';
+  const input = seed || 'fahari';
   for (let i = 0; i < input.length; i += 1) {
     hash ^= input.charCodeAt(i);
     hash = Math.imul(hash, 16777619);

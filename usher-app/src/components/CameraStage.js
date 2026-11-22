@@ -37,7 +37,7 @@ export default function CameraStage({
         </View>
         <Text style={styles.permissionTitle}>Camera access needed</Text>
         <Text style={styles.permissionCopy} numberOfLines={3}>
-          Éclat Gate scans guest QR codes with the camera. Video never leaves this device.
+          Fahari Gate scans guest QR codes with the camera. Video never leaves this device.
         </Text>
         <Pressable
           style={({ pressed }) => [styles.permissionButton, pressed && styles.pressed]}
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   permissionButtonText: {
     ...typography.body,
-    color: colors.white,
+    color: colors.bg,
     fontSize: 13,
     fontWeight: '700',
   },

@@ -246,7 +246,7 @@ export default function GateScreen({ session, onSignOut, onSessionExpired }) {
 
   const openSettings = useCallback(() => {
     Linking.openSettings().catch(() => {
-      Alert.alert('Open settings', 'Enable camera access for Éclat Gate in your device settings.');
+      Alert.alert('Open settings', 'Enable camera access for Fahari Gate in your device settings.');
     });
   }, []);
 

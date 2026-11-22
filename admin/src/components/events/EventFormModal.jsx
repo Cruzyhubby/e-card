@@ -15,10 +15,10 @@ const EMPTY_FORM = {
   total_seats: '',
   total_tables: '',
   description: '',
-  accent_color: '#C084FC',
+  accent_color: '#C49A3C',
 };
 
-const ACCENTS = ['#C084FC', '#FB7185', '#F5C870', '#34D399', '#38BDF8', '#A78BFA', '#FB923C', '#F472B6'];
+const ACCENTS = ['#C49A3C', '#3D7A5E', '#E2C97E', '#A87F2E', '#D08A6A', '#8B2E2E', '#2A5240', '#6B6358'];
 
 const toForm = (event) => {
   if (!event) return { ...EMPTY_FORM };
@@ -32,7 +32,7 @@ const toForm = (event) => {
     total_seats: String(event.total_seats ?? ''),
     total_tables: String(event.total_tables ?? ''),
     description: event.description || '',
-    accent_color: event.accent_color || '#C084FC',
+    accent_color: event.accent_color || '#C49A3C',
   };
 };
 

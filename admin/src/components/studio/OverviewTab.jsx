@@ -73,7 +73,7 @@ function CapacityRing({ stats }) {
             <defs>
               <linearGradient id="ringGradient" x1="0" y1="0" x2="1" y2="1">
                 <stop offset="0%" stopColor="#34D399" />
-                <stop offset="100%" stopColor="#8B5CF6" />
+                <stop offset="100%" stopColor="#C49A3C" />
               </linearGradient>
             </defs>
           </svg>
@@ -100,7 +100,7 @@ function CapacityRing({ stats }) {
         </div>
         <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-accent-500 to-fuchsia-400"
+            className="h-full rounded-full bg-gradient-to-r from-accent-500 to-accent-300"
             style={{ width: `${Math.min(stats.capacity_used_pct, 100)}%` }}
           />
         </div>
@@ -112,7 +112,7 @@ function CapacityRing({ stats }) {
 function Funnel({ stats }) {
   const rows = [
     { label: 'On guest list', value: stats.guests, pct: 100, className: 'from-slate-400 to-slate-500' },
-    { label: 'Invitations sent', value: stats.sent, pct: stats.invitation_rate_pct, className: 'from-accent-500 to-fuchsia-400' },
+    { label: 'Invitations sent', value: stats.sent, pct: stats.invitation_rate_pct, className: 'from-accent-500 to-accent-300' },
     { label: 'Checked in', value: stats.checked_in, pct: stats.check_in_rate_pct, className: 'from-emerald-500 to-teal-400' },
   ];
   return (

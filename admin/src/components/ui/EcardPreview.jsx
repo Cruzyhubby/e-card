@@ -148,8 +148,8 @@ export default function EcardPreview({ event, guest, config, className }) {
       >
         <div className="w-full rounded-[1.1cqw] bg-white p-[1.5cqw] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]">
           <FauxQr
-            seed={guest?.qr_token || 'eclat-preview'}
-            fg="#0B1120"
+            seed={guest?.qr_token || 'fahari-preview'}
+            fg="#0A1712"
             bg="#FFFFFF"
             className="h-auto w-full"
             size={160}

@@ -22,7 +22,7 @@ class PasswordResetCodeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Éclat password reset code',
+            subject: 'Your Fahari password reset code',
         );
     }
 

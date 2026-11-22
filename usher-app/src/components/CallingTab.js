@@ -867,7 +867,7 @@ const styles = StyleSheet.create({
   },
   logBtnText: {
     ...typography.small,
-    color: colors.white,
+    color: colors.bg,
     fontSize: 12,
     fontWeight: '800',
   },
@@ -1094,7 +1094,7 @@ const styles = StyleSheet.create({
   },
   sheetSaveText: {
     ...typography.small,
-    color: colors.white,
+    color: colors.bg,
     fontSize: 13,
     fontWeight: '800',
   },

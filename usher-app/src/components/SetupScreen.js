@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -447,11 +448,14 @@ export default function SetupScreen({ initial, notice, onStart, onSignOut, onSes
         >
           <View style={styles.wrap}>
             <View style={styles.brandLockup}>
-              <View style={styles.brandMark}>
-                <Icon name="qr" size={22} color={colors.white} />
-              </View>
+              <Image
+                source={require('../../assets/fahari-logo.png')}
+                style={styles.brandLogo}
+                resizeMode="contain"
+                accessibilityLabel="Fahari Creative"
+              />
               <View>
-                <Text style={styles.brandTitle}>Éclat Gate</Text>
+                <Text style={styles.brandTitle}>Fahari Gate</Text>
                 <Text style={styles.brandSubtitle}>Usher check-in & gate control</Text>
               </View>
             </View>
@@ -668,18 +672,13 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: 24,
   },
-  brandMark: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: colors.accentStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
+  brandLogo: {
+    width: 104,
+    height: 44,
   },
   brandTitle: {
-    ...typography.title,
+    ...typography.brand,
     color: colors.text,
-    fontSize: 22,
   },
   brandSubtitle: {
     ...typography.small,
@@ -710,7 +709,7 @@ const styles = StyleSheet.create({
   },
   bannerErrorText: {
     ...typography.small,
-    color: '#FCA5A5',
+    color: colors.dangerText,
     fontSize: 13,
     lineHeight: 19,
   },
@@ -771,7 +770,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   statusTextBad: {
-    color: '#FCA5A5',
+    color: colors.dangerText,
   },
   statusAction: {
     ...typography.small,

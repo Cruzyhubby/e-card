@@ -156,7 +156,7 @@ export default function HomeTab({
             accessibilityRole="button"
           >
             <View style={[styles.actionIcon, styles.actionIconPrimary]}>
-              <Icon name="qr" size={20} color={colors.white} />
+              <Icon name="qr" size={20} color={colors.bg} />
             </View>
             <View>
               <Text style={[styles.actionTitle, styles.actionTitlePrimary]}>Scan Ticket</Text>
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionIconPrimary: {
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: 'rgba(8, 18, 14, 0.14)',
   },
   actionTitle: {
     ...typography.body,
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   actionTitlePrimary: {
-    color: colors.white,
+    color: colors.bg,
   },
   actionSub: {
     ...typography.small,
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   },
   actionSubPrimary: {
     ...typography.small,
-    color: 'rgba(255, 255, 255, 0.82)',
+    color: 'rgba(8, 18, 14, 0.72)',
     fontSize: 11,
     marginTop: 2,
   },

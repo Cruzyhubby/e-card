@@ -1,5 +1,5 @@
 @php
-    $accent = preg_match('/^#[0-9a-fA-F]{3,8}$/', (string) ($event['accent_color'] ?? '')) ? $event['accent_color'] : '#4f46e5';
+    $accent = '#C49A3C';
     $date = $event['event_date'] ?? null;
     $dateLabel = $date ? \Illuminate\Support\Carbon::parse($date)->format('d M Y') : 'Date not set';
     $generated = \Illuminate\Support\Carbon::parse($generated_at)->format('d M Y, H:i');
@@ -13,31 +13,31 @@
     <title>Event report — {{ $event['title'] }}</title>
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #1e293b; }
+        body { margin: 0; font-family: 'DejaVu Sans', sans-serif; font-size: 10px; color: #2E2A24; }
         .page { padding: 28px 32px; }
         .brandbar { border-bottom: 3px solid {{ $accent }}; padding-bottom: 10px; margin-bottom: 16px; }
-        .brand { font-size: 20px; font-weight: bold; letter-spacing: 4px; color: #0f172a; }
-        .brand small { display: block; font-size: 8px; letter-spacing: 2px; color: #64748b; font-weight: normal; margin-top: 2px; }
-        .report-title { font-size: 15px; font-weight: bold; margin: 0 0 2px; color: #0f172a; }
-        .muted { color: #64748b; }
+        .brand { font-size: 20px; font-weight: bold; letter-spacing: 4px; color: #152B22; }
+        .brand small { display: block; font-size: 8px; letter-spacing: 2px; color: #6B6358; font-weight: normal; margin-top: 2px; }
+        .report-title { font-size: 15px; font-weight: bold; margin: 0 0 2px; color: #152B22; }
+        .muted { color: #6B6358; }
         h2 { font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: {{ $accent }}; margin: 18px 0 6px; }
         table { width: 100%; border-collapse: collapse; }
         .meta td { padding: 3px 10px 3px 0; vertical-align: top; }
         .meta .k { color: #64748b; width: 90px; }
         .tiles { width: 100%; margin-top: 10px; }
-        .tiles td { width: 20%; padding: 8px 6px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center; }
-        .tiles .n { font-size: 16px; font-weight: bold; color: #0f172a; display: block; }
-        .tiles .l { font-size: 7.5px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
+        .tiles td { width: 20%; padding: 8px 6px; background: #FDFAF3; border: 1px solid #EDE3C8; text-align: center; }
+        .tiles .n { font-size: 16px; font-weight: bold; color: #152B22; display: block; }
+        .tiles .l { font-size: 7.5px; text-transform: uppercase; letter-spacing: 1px; color: #6B6358; }
         .grid td { vertical-align: top; }
         .grid .col { padding-right: 12px; }
-        .data th { text-align: left; font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; border-bottom: 1px solid #cbd5e1; padding: 4px 5px; }
-        .data td { padding: 4px 5px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
-        .data tr:nth-child(even) td { background: #fbfcfe; }
-        .pill { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 7.5px; background: #eef2ff; color: #4338ca; }
+        .data th { text-align: left; font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.8px; color: #6B6358; border-bottom: 1px solid #D8CDB4; padding: 4px 5px; }
+        .data td { padding: 4px 5px; border-bottom: 1px solid #F0E9DA; vertical-align: top; }
+        .data tr:nth-child(even) td { background: #FDFAF3; }
+        .pill { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 7.5px; background: #F7F0DC; color: #8A6A1A; }
         .right { text-align: right; }
         .center { text-align: center; }
-        .empty { padding: 8px; background: #f8fafc; border: 1px dashed #cbd5e1; color: #64748b; text-align: center; }
-        .footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 7.5px; color: #94a3b8; }
+        .empty { padding: 8px; background: #FDFAF3; border: 1px dashed #D8CDB4; color: #6B6358; text-align: center; }
+        .footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #EDE3C8; font-size: 7.5px; color: #A89F93; }
     </style>
 </head>
 <body>

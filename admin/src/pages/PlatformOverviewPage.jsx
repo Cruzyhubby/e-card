@@ -113,7 +113,7 @@ export default function PlatformOverviewPage() {
             Platform <span className="font-serif font-normal italic text-accent-300">overview</span>
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-            Organizer accounts, delivery providers, and security signals across Éclat. Guest-level records stay inside
+            Organizer accounts, delivery providers, and security signals across Fahari. Guest-level records stay inside
             each organizer&apos;s workspace.
           </p>
         </div>
@@ -300,7 +300,7 @@ export default function PlatformOverviewPage() {
                   <tr key={event.id} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.02]">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: event.accent_color || '#8B5CF6' }} />
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: event.accent_color || '#C49A3C' }} />
                         <div>
                           <p className="text-xs font-semibold text-slate-200">{event.title}</p>
                           <p className="text-[10px] text-slate-500">{event.host_name}</p>

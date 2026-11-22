@@ -1,7 +1,7 @@
 {
     "name": "eclat/backend",
     "type": "project",
-    "description": "Éclat multi-event e-card and invitation management API.",
+    "description": "Fahari Creative multi-event e-card and invitation management API.",
     "keywords": [
         "laravel",
         "invitations",

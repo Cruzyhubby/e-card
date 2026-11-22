@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>{{ $event->title }} · Your invitation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..800&family=Playfair+Display:wght@400..900&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: {{ $event->accent_color }};
-            --ink: #0f172a;
-            --muted: #64748b;
+            --ink: #2E2A24;
+            --forest: #152B22;
+            --gold: #C49A3C;
+            --gold-light: #E2C97E;
+            --muted: #6B6358;
         }
 
         * {
@@ -21,12 +27,12 @@
             min-height: 100vh;
             min-height: 100dvh;
             padding: 32px 16px;
-            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-family: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
             color: var(--ink);
             background:
-                radial-gradient(circle at 12% 8%, rgba(192, 132, 252, 0.18), transparent 42%),
-                radial-gradient(circle at 88% 92%, rgba(14, 165, 233, 0.14), transparent 46%),
-                #f6f4fb;
+                radial-gradient(circle at 12% 8%, rgba(196, 154, 60, 0.16), transparent 42%),
+                radial-gradient(circle at 88% 92%, rgba(61, 122, 94, 0.12), transparent 46%),
+                #FDFAF3;
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -40,16 +46,43 @@
             margin-block: auto;
         }
 
+        .brandbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+            padding: 12px 18px;
+            border-radius: 16px;
+            background: var(--forest);
+            border: 1px solid rgba(226, 201, 126, 0.18);
+        }
+
+        .brandbar img {
+            display: block;
+            height: 28px;
+            width: auto;
+        }
+
+        .brandbar span {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(253, 250, 243, 0.55);
+        }
+
         .card {
             overflow: hidden;
             min-width: 0;
             border-radius: 26px;
-            background: #ffffff;
-            box-shadow: 0 30px 70px -30px rgba(15, 23, 42, 0.42);
+            background: #FFFFFF;
+            border: 1px solid rgba(196, 154, 60, 0.18);
+            box-shadow: 0 30px 70px -30px rgba(21, 43, 34, 0.42);
         }
 
         .ecard {
-            background: #0b1120;
+            background: #08120E;
         }
 
         .ecard svg {
@@ -74,7 +107,8 @@
 
         h1 {
             margin: 0 0 6px;
-            font-family: Georgia, "Times New Roman", serif;
+            font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+            font-weight: 600;
             font-size: 30px;
             line-height: 1.15;
         }
@@ -90,7 +124,7 @@
             gap: 14px;
             margin: 0;
             padding: 20px 0 0;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid rgba(196, 154, 60, 0.24);
         }
 
         .meta div {
@@ -122,8 +156,9 @@
             font-weight: 700;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: {{ $guest->status === 'checked_in' ? '#065f46' : '#4c1d95' }};
-            background: {{ $guest->status === 'checked_in' ? '#d1fae5' : '#f3e8ff' }};
+            color: {{ $guest->status === 'checked_in' ? '#2A5240' : '#8A6A1A' }};
+            background: {{ $guest->status === 'checked_in' ? '#E7F0EA' : '#F7F0DC' }};
+            border: 1px solid {{ $guest->status === 'checked_in' ? 'rgba(42, 82, 64, 0.2)' : 'rgba(196, 154, 60, 0.32)' }};
         }
 
         .download {
@@ -134,8 +169,9 @@
             margin-top: 22px;
             padding: 14px 20px;
             border-radius: 14px;
-            background: var(--accent);
-            color: #0b1120;
+            background: var(--forest);
+            color: var(--gold-light);
+            border: 1px solid rgba(226, 201, 126, 0.25);
             font-size: 13px;
             font-weight: 700;
             letter-spacing: 0.08em;
@@ -171,7 +207,8 @@
         }
 
         .foot a {
-            color: var(--ink);
+            color: var(--forest);
+            font-weight: 600;
         }
 
         @media (max-width: 480px) {
@@ -187,6 +224,11 @@
 </head>
 <body>
     <div class="shell">
+        <header class="brandbar">
+            <img src="{{ asset('branding/fahari-logo.png') }}" alt="Fahari Creative">
+            <span>E-Card Suite</span>
+        </header>
+
         <article class="card">
             <div class="ecard">
                 {!! $ecardSvg !!}
@@ -233,7 +275,8 @@
         </article>
 
         <p class="foot">
-            This page is your gate pass. Present the QR code above at the entrance — reopen this link any time.
+            This page is your gate pass. Present the QR code above at the entrance — reopen this link any time.<br>
+            Crafted by Fahari Creative.
         </p>
     </div>
 </body>

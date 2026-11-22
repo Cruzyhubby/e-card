@@ -9,7 +9,7 @@ class RootController extends Controller
     public function __invoke(): JsonResponse
     {
         return response()->json([
-            'name' => 'Éclat API',
+            'name' => 'Fahari API',
             'status' => 'ok',
             'docs' => '/api',
         ]);

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedInteger('total_seats');
             $table->unsignedInteger('total_tables');
             $table->text('description')->nullable();
-            $table->char('accent_color', 7)->default('#C084FC');
+            $table->char('accent_color', 7)->default('#C49A3C');
             $table->enum('invitation_status', ['draft', 'live'])->default('draft');
             $table->json('ecard_config')->nullable();
             $table->timestamps();

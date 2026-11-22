@@ -70,7 +70,7 @@ class EventController extends Controller
     {
         $data = $request->validated();
         $data['user_id'] = $request->user()->id;
-        $data['accent_color'] = $data['accent_color'] ?? '#C084FC';
+        $data['accent_color'] = $data['accent_color'] ?? '#C49A3C';
         $data['description'] = $data['description'] ?? '';
         $data['invitation_status'] = 'draft';
         $data['ecard_config'] = array_replace(

@@ -167,7 +167,7 @@ export default function EventCard({ event, index = 0, onOpen, onEdit, onRequestD
             </div>
             <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-accent-500 to-fuchsia-400 transition-all duration-700"
+                className="h-full rounded-full bg-gradient-to-r from-accent-500 to-accent-300 transition-all duration-700"
                 style={{ width: `${Math.min(occupancy, 100)}%` }}
               />
             </div>

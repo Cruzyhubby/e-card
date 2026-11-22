@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -13,11 +13,8 @@ function BootSplash() {
   return (
     <View style={styles.boot}>
       <View style={styles.bootBrandWrap}>
-        <View style={styles.bootMark}>
-          <Text style={styles.bootMarkText}>É</Text>
-        </View>
-        <Text style={styles.bootBrand}>ÉCLAT GATE</Text>
-        <Text style={styles.bootSub}>USHER SCANNER</Text>
+        <Image source={require('./assets/fahari-logo.png')} style={styles.bootLogo} resizeMode="contain" />
+        <Text style={styles.bootSub}>GATE SCANNER</Text>
       </View>
       <ActivityIndicator color={colors.accent} />
     </View>
@@ -158,26 +155,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xl,
   },
-  bootMark: {
-    width: 56,
-    height: 56,
-    borderRadius: 17,
-    backgroundColor: colors.accentStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
+  bootLogo: {
+    width: 150,
+    height: 62,
     marginBottom: spacing.lg,
-  },
-  bootMarkText: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: colors.white,
-    lineHeight: 34,
-  },
-  bootBrand: {
-    ...typography.display,
-    color: colors.text,
-    letterSpacing: 2,
-    fontSize: 26,
   },
   bootSub: {
     ...typography.label,

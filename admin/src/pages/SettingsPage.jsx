@@ -396,7 +396,7 @@ npx expo start`}</CodeBlock>
 
         <div className="space-y-5">
           <section className="panel overflow-hidden">
-            <div className="relative h-24 bg-gradient-to-br from-accent-500/25 via-fuchsia-500/10 to-transparent">
+            <div className="relative h-24 bg-gradient-to-br from-accent-500/25 via-forest-400/10 to-transparent">
               <div className="absolute inset-0 bg-grid opacity-50" />
             </div>
             <div className="px-5 pb-5">
@@ -450,7 +450,7 @@ npx expo start`}</CodeBlock>
           </Section>
 
           <section className="panel p-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">Éclat Event Suite</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">Fahari Event Suite</p>
             <p className="mt-2 text-xs leading-relaxed text-slate-500">
               React + Laravel + Supabase Postgres + Expo. Version 1.0.0. Built for multi-event invitation operations
               and live gate verification.

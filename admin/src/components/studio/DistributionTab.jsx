@@ -332,7 +332,7 @@ export default function DistributionTab({ event, guests, onChanged }) {
                   <FauxQr
                     seed={`${previewGuest?.qr_token || 'preview'}-ecard`}
                     size={112}
-                    fg="#0B1120"
+                    fg="#0A1712"
                     bg="#FFFFFF"
                   />
                 </span>
@@ -393,7 +393,7 @@ export default function DistributionTab({ event, guests, onChanged }) {
                   <FauxQr
                     seed={`${previewGuest?.qr_token || 'preview'}-ecard`}
                     size={56}
-                    fg="#0B1120"
+                    fg="#0A1712"
                     bg="#FFFFFF"
                   />
                 </span>

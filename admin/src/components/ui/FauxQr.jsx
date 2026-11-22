@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { fakeQrMatrix } from '../../lib/utils';
 
-export default function FauxQr({ seed = 'eclat', size = 120, fg = '#0B1120', bg = '#FFFFFF', className }) {
+export default function FauxQr({ seed = 'fahari', size = 120, fg = '#0A1712', bg = '#FFFFFF', className }) {
   const matrix = useMemo(() => fakeQrMatrix(seed, 25), [seed]);
   const cell = 100 / matrix.length;
   const rects = [];

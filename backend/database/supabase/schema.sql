@@ -1,4 +1,4 @@
--- Éclat — Supabase / PostgreSQL schema
+-- Fahari Creative — Supabase / PostgreSQL schema
 -- Mirrors backend/database/migrations as of 2026-11-21.
 --
 -- Use this file on a FRESH Supabase project:
@@ -47,7 +47,7 @@ create table if not exists "events" (
     "total_seats" integer not null,
     "total_tables" integer not null,
     "description" text null,
-    "accent_color" char(7) not null default '#C084FC',
+    "accent_color" char(7) not null default '#C49A3C',
     "invitation_status" varchar(255) not null default 'draft' check ("invitation_status" in ('draft', 'live')),
     "ecard_config" json null,
     "settings" json null,

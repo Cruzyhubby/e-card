@@ -1,6 +1,6 @@
-# Éclat Gate
+# Fahari Gate
 
-Mobile gate-scanner for the Éclat invitation platform. The organizer creates an **usher account** for one event in Event Studio; the usher signs in here with that account's e-mail and password and scans guest QR codes at the door. Accounts are real user accounts — there are no gate pass tokens.
+Mobile gate-scanner for the Fahari Creative invitation platform. The organizer creates an **usher account** for one event in Event Studio; the usher signs in here with that account's e-mail and password and scans guest QR codes at the door. Accounts are real user accounts — there are no gate pass tokens.
 
 ## Run
 

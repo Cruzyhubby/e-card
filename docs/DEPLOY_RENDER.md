@@ -1,4 +1,4 @@
-# Deploying Éclat on Render (free plan)
+# Deploying Fahari Creative on Render (free plan)
 
 The deployment runs as **one Docker web service** that serves both the admin app and the
 Laravel API on the same HTTPS domain. The database is your existing **Supabase Postgres**

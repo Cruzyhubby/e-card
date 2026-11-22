@@ -13,7 +13,8 @@ export default function PrimaryButton({
   style,
 }) {
   const blocked = disabled || loading;
-  const background = blocked ? colors.surfaceAlt : ACCENTS[tone] || colors.accentStrong;
+  const resolvedTone = TEXT[tone] ? tone : 'accent';
+  const background = blocked ? colors.surfaceAlt : ACCENTS[resolvedTone];
 
   return (
     <Pressable
@@ -30,9 +31,16 @@ export default function PrimaryButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.white} />
+        <ActivityIndicator color={TEXT[resolvedTone]} />
       ) : (
-        <Text style={[styles.label, small && styles.smallLabel, blocked && styles.labelBlocked]}>
+        <Text
+          style={[
+            styles.label,
+            small && styles.smallLabel,
+            { color: TEXT[resolvedTone] },
+            blocked && styles.labelBlocked,
+          ]}
+        >
           {label}
         </Text>
       )}
@@ -41,10 +49,17 @@ export default function PrimaryButton({
 }
 
 const ACCENTS = {
-  accent: '#2563EB',
-  success: '#10B981',
-  danger: '#EF4444',
-  warning: '#F59E0B',
+  accent: colors.accentStrong,
+  success: colors.success,
+  danger: colors.danger,
+  warning: colors.warning,
+};
+
+const TEXT = {
+  accent: colors.bg,
+  success: colors.bg,
+  danger: colors.white,
+  warning: colors.bg,
 };
 
 const styles = StyleSheet.create({
@@ -65,7 +80,6 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.body,
-    color: colors.white,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.1,

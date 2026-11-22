@@ -237,7 +237,7 @@ export default function UsherShiftsPage() {
                           {shift.gate_label || '—'}
                         </p>
                         <p className="mt-0.5 flex items-center gap-1.5 text-[10px] text-slate-500">
-                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: shift.event?.accent_color || '#8B5CF6' }} />
+                          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: shift.event?.accent_color || '#C49A3C' }} />
                           <span className="max-w-[200px] truncate">{shift.event?.title || '—'}</span>
                         </p>
                       </td>

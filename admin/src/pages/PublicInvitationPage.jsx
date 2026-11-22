@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   XCircle,
 } from 'lucide-react';
+import Brand from '../components/Brand';
 import EcardPreview from '../components/ui/EcardPreview';
 import Badge from '../components/ui/Badge';
 import { PageLoader } from '../components/ui/Skeleton';
@@ -46,17 +47,7 @@ export default function PublicInvitationPage() {
   const ecardUrl = `${apiOrigin}/api/invitations/${token}/ecard.svg`;
   const ecardDownloadUrl = ecardUrl ? `${ecardUrl}?download=1` : null;
 
-  const brand = (
-    <div className="flex items-center gap-2.5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-400 via-accent-500 to-fuchsia-600 shadow-glow">
-        <span className="font-serif text-xl leading-none text-white">É</span>
-      </div>
-      <div>
-        <p className="font-serif text-2xl leading-none text-white">Éclat</p>
-        <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.28em] text-slate-500">Event suite</p>
-      </div>
-    </div>
-  );
+  const brand = <Brand size="md" />;
 
   if (loading) return <PageLoader label="Preparing your invitation" />;
 
@@ -71,7 +62,7 @@ export default function PublicInvitationPage() {
           <p className="mt-2 text-sm leading-relaxed text-slate-400">{error}</p>
           <Link to="/" className="btn-secondary mt-6">
             <ArrowLeft className="h-4 w-4" />
-            Return to Éclat
+            Return to Fahari
           </Link>
         </div>
       </div>
@@ -86,7 +77,7 @@ export default function PublicInvitationPage() {
     <div className="relative min-h-dvh overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-accent-600/15 blur-[120px]" />
-        <div className="absolute -right-24 bottom-0 h-[26rem] w-[26rem] rounded-full bg-fuchsia-600/10 blur-[110px]" />
+        <div className="absolute -right-24 bottom-0 h-[26rem] w-[26rem] rounded-full bg-forest-400/10 blur-[110px]" />
         <div className="absolute inset-0 bg-grid opacity-40" />
       </div>
 
@@ -222,7 +213,7 @@ export default function PublicInvitationPage() {
         </main>
 
         <footer className="flex flex-col items-center justify-between gap-2 border-t border-white/[0.06] py-5 text-[10px] text-slate-600 sm:flex-row">
-          <span>© 2026 Éclat. Crafted for unforgettable events.</span>
+          <span>© 2026 Fahari Creative. We are crafting.</span>
           <Link to="/" className="transition hover:text-slate-400">
             Organizer sign in
           </Link>

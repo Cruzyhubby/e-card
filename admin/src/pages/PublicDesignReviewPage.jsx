@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Loader2, Send, ShieldCheck, XCircle } from 'lucide-react';
+import Brand from '../components/Brand';
 import EcardPreview from '../components/ui/EcardPreview';
 import Badge from '../components/ui/Badge';
 import { Field, Input, Textarea } from '../components/ui/Field';
@@ -96,21 +97,13 @@ export default function PublicDesignReviewPage() {
     <div className="relative min-h-dvh overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-accent-600/15 blur-[120px]" />
-        <div className="absolute -right-24 bottom-0 h-[26rem] w-[26rem] rounded-full bg-fuchsia-600/10 blur-[110px]" />
+        <div className="absolute -right-24 bottom-0 h-[26rem] w-[26rem] rounded-full bg-forest-400/10 blur-[110px]" />
         <div className="absolute inset-0 bg-grid opacity-40" />
       </div>
 
       <div className="relative mx-auto max-w-5xl px-5 py-6 sm:px-8">
         <header className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent-400 via-accent-500 to-fuchsia-600 shadow-glow">
-              <span className="font-serif text-xl leading-none text-white">É</span>
-            </div>
-            <div>
-              <p className="font-serif text-2xl leading-none text-white">Éclat</p>
-              <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.28em] text-slate-500">Design review</p>
-            </div>
-          </div>
+          <Brand size="md" tagline="Design review" />
           <Badge tone={meta.tone} dot>
             {meta.label}
           </Badge>

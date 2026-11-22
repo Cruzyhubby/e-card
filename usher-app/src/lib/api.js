@@ -250,7 +250,7 @@ export function createApi({ baseUrl, token = null, timeoutMs = REQUEST_TIMEOUT_M
       const data = await request('/ping');
       if (!data || data.service !== 'Gate API') {
         throw new ApiError(
-          `That address answered, but it is not the Éclat API. Use the backend root, e.g. http://YOUR-IP:8000.`,
+          `That address answered, but it is not the Fahari API. Use the backend root, e.g. http://YOUR-IP:8000.`,
           0,
           data
         );

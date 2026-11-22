@@ -1,4 +1,4 @@
-# Éclat — single-container deployment for Render (free plan).
+# Fahari Creative — single-container deployment for Render (free plan).
 # Builds the admin SPA and the Laravel API into one image so both share one origin:
 #   /        -> admin SPA
 #   /api/*   -> Laravel (php-fpm via nginx)

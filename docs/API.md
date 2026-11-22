@@ -1,4 +1,4 @@
-# Éclat API Contract
+# Fahari Creative API Contract
 
 Base URL: `{APP_URL}/api` — JSON only. Auth uses Laravel Sanctum bearer tokens.
 
@@ -136,7 +136,7 @@ Constraints: `bg_color`, `accent_color`, `text_color` are hex `#RRGGBB`; `name_y
 No authentication. Used by the scanner app to confirm it is talking to the right server before sign-in.
 Response `200`:
 ```json
-{ "app": "Éclat", "service": "Gate API", "status": "ok", "time": "2026-11-15T09:30:00+03:00" }
+{ "app": "Fahari", "service": "Gate API", "status": "ok", "time": "2026-11-15T09:30:00+03:00" }
 ```
 Any other JSON shape means the URL points at a different service.
 

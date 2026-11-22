@@ -132,7 +132,7 @@ export default function EcardStudioTab({ event, guests, onSaved }) {
                   </div>
                   <p className="mt-1.5 truncate text-[10px] font-medium text-slate-300">{template.name}</p>
                   {active ? (
-                    <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent-500 text-white">
+                    <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent-500 text-ink-950">
                       <Check className="h-2.5 w-2.5" />
                     </span>
                   ) : null}

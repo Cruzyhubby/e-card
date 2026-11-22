@@ -34,7 +34,7 @@ function RequireAuth({ children }) {
 
 function GuestOnly({ children }) {
   const { user, isAuthenticated, booting } = useAuth();
-  if (booting) return <PageLoader label="Loading Éclat" />;
+  if (booting) return <PageLoader label="Loading Fahari" />;
   if (isAuthenticated) return <Navigate to={user?.must_change_password ? '/change-password' : '/'} replace />;
   return children;
 }

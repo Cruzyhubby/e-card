@@ -1,6 +1,6 @@
-# Kuweka Éclat kwenye Supabase (Postgres)
+# Kuweka Fahari Creative kwenye Supabase (Postgres)
 
-Mwongozo huu unaeleza hatua kwa hatua jinsi ya kuunganisha Éclat na **Supabase (database pekee)**.
+Mwongozo huu unaeleza hatua kwa hatua jinsi ya kuunganisha Fahari Creative na **Supabase (database pekee)**.
 
 Kile kinachobadilika: **database tu**. Laravel API, admin web, usher scanner na Sanctum auth zinabaki kama zilivyo. Hakuna Supabase JS client, hakuna Auth ya Supabase, hakuna Storage — Supabase inatumika kama Postgres ya kawaida tu.
 

@@ -1,26 +1,26 @@
 {
   "expo": {
-    "name": "Éclat Gate",
+    "name": "Fahari Gate",
     "slug": "eclat-gate",
     "scheme": "eclatgate",
     "sdkVersion": "58.0.0",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#060A13",
+    "backgroundColor": "#08120E",
     "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.eclat.gate",
       "infoPlist": {
-        "NSCameraUsageDescription": "Éclat Gate uses the camera to scan guest invitation QR codes at the door."
+        "NSCameraUsageDescription": "Fahari Gate uses the camera to scan guest invitation QR codes at the door."
       }
     },
     "android": {
       "package": "app.eclat.gate",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#090E17"
+        "backgroundColor": "#152B22"
       },
       "permissions": [
         "CAMERA",
@@ -31,14 +31,14 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Éclat Gate uses the camera to scan guest invitation QR codes at the door."
+          "cameraPermission": "Fahari Gate uses the camera to scan guest invitation QR codes at the door."
         }
       ],
       "expo-status-bar",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#060A13"
+          "backgroundColor": "#08120E"
         }
       ],
       "expo-secure-store"

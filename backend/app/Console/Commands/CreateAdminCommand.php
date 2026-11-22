@@ -14,11 +14,11 @@ class CreateAdminCommand extends Command
         {--email= : E-mail address}
         {--password= : Password (omitted = generate a secure one)}';
 
-    protected $description = 'Create or update an Éclat super admin (platform owner) account.';
+    protected $description = 'Create or update a Fahari super admin (platform owner) account.';
 
     public function handle(): int
     {
-        $name = $this->option('name') ?: $this->ask('Name', 'Éclat Admin');
+        $name = $this->option('name') ?: $this->ask('Name', 'Fahari Admin');
         $email = Str::lower(trim((string) ($this->option('email') ?: $this->ask('E-mail address'))));
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {

@@ -54,7 +54,7 @@ export default function Topbar({ onMenu }) {
         </button>
 
         <div className="flex min-w-0 items-center gap-2 text-sm">
-          <span className="hidden text-slate-600 sm:inline">Éclat</span>
+          <span className="hidden text-slate-600 sm:inline">Fahari</span>
           <span className="hidden text-slate-700 sm:inline">/</span>
           <span className="truncate font-semibold text-slate-200">{label}</span>
         </div>

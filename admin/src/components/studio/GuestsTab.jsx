@@ -127,7 +127,7 @@ export default function GuestsTab({ event, guests, tables = null, onChanged }) {
 
   const downloadImportTemplate = async () => {
     const { blob, filename } = await api.guests.importTemplate();
-    downloadBlob(filename || 'eclat-guest-import-template.xlsx', blob);
+    downloadBlob(filename || 'fahari-guest-import-template.xlsx', blob);
   };
 
   const exportExcel = async () => {

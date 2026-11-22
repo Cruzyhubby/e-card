@@ -1,4 +1,4 @@
-# Éclat — Multi-Event E-Card & Invitation Management
+# Fahari Creative — Multi-Event E-Card & Invitation Management
 
 Production-grade platform for designing e-cards, distributing guest invitations, and verifying QR passes at the entrance. Three deployable pieces share one Laravel API and one Postgres database (Supabase).
 

@@ -338,7 +338,7 @@ export default function ImportGuestsModal({ open, onClose, onAnalyze, onApply, o
             <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold text-slate-300">Start from the Éclat template</p>
+                  <p className="text-[11px] font-semibold text-slate-300">Start from the Fahari template</p>
                   <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
                     Name, phone, email, card type, attendees, RSVP, table, seat and notes — with a field guide.
                   </p>

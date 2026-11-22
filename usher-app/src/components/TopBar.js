@@ -1,7 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import Icon from './Icon';
 import { initials } from '../lib/format';
 import { colors, spacing, typography } from '../theme';
 
@@ -9,12 +8,15 @@ export default function TopBar({ user, deviceId, online, onProfile }) {
   return (
     <View style={styles.bar}>
       <View style={styles.brand}>
-        <View style={styles.logo}>
-          <Icon name="qr" size={16} color={colors.white} />
-        </View>
+        <Image
+          source={require('../../assets/fahari-logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+          accessibilityLabel="Fahari Creative"
+        />
         <View style={styles.brandText}>
           <Text style={styles.title} numberOfLines={1}>
-            Éclat Gate
+            Gate scanner
           </Text>
           <Text style={styles.subtitle} numberOfLines={1}>
             {deviceId || 'Usher scanner'}
@@ -65,12 +67,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   logo: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: colors.accentStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 88,
+    height: 26,
   },
   brandText: {
     minWidth: 0,

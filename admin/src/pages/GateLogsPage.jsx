@@ -215,7 +215,7 @@ export default function GateLogsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: log.event_accent || '#8B5CF6' }} />
+                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: log.event_accent || '#C49A3C' }} />
                             <span className="max-w-[220px] truncate text-xs text-slate-300">{log.event_title}</span>
                           </div>
                         </td>

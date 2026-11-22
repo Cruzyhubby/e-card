@@ -10,7 +10,7 @@ class HealthController extends Controller
     public function __invoke(): JsonResponse
     {
         return response()->json([
-            'app' => 'Éclat',
+            'app' => 'Fahari',
             'service' => 'Gate API',
             'status' => 'ok',
             'time' => now()->toIso8601String(),

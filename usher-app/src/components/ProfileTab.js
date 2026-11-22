@@ -64,7 +64,7 @@ export default function ProfileTab({ user, event, deviceId, onChangePassword, on
       <Card style={styles.secondCard}>
         <Text style={styles.cardTitle}>Session & security</Text>
         <Text style={styles.cardCopy}>
-          This scanner is locked to one event. Every check-in is validated by the Éclat server before a guest is
+          This scanner is locked to one event. Every check-in is validated by the Fahari server before a guest is
           admitted.
         </Text>
         <View style={styles.kvList}>
@@ -80,7 +80,7 @@ export default function ProfileTab({ user, event, deviceId, onChangePassword, on
         </View>
       </Card>
 
-      <Text style={styles.footnote}>Éclat Gate Scanner · signed in as {email}</Text>
+      <Text style={styles.footnote}>Fahari Gate Scanner · signed in as {email}</Text>
     </ScrollView>
   );
 }
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 46,
     borderRadius: radius.md,
-    backgroundColor: colors.danger,
+    backgroundColor: colors.dangerStrong,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

@@ -240,7 +240,7 @@ export default function CheckInLogsTab({ logs, onRefresh }) {
             description={
               logs?.data?.length
                 ? 'Try a different verification status or clear the search.'
-                : 'Scans from the Éclat usher scanner appear here in real time. Use the Expo app to verify QR passes at the gate.'
+                : 'Scans from the Fahari Gate scanner appear here in real time. Use the Expo app to verify QR passes at the gate.'
             }
           />
         )}

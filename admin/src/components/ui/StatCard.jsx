@@ -5,7 +5,7 @@ const TONES = {
   violet: {
     icon: 'border-accent-400/20 bg-accent-500/15 text-accent-300',
     glow: 'from-accent-500/20',
-    stroke: '#A78BFA',
+    stroke: '#C49A3C',
   },
   sky: {
     icon: 'border-sky-400/20 bg-sky-500/15 text-sky-300',
@@ -20,7 +20,7 @@ const TONES = {
   gold: {
     icon: 'border-gold/20 bg-gold/10 text-gold',
     glow: 'from-gold/20',
-    stroke: '#F5C870',
+    stroke: '#E2C97E',
   },
   rose: {
     icon: 'border-rose-400/20 bg-rose-500/15 text-rose-300',

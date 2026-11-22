@@ -124,7 +124,7 @@ class PlatformSettings
             'group' => 'Email SMTP',
             'label' => 'From name',
             'type' => 'text',
-            'default' => 'Éclat Events',
+            'default' => 'Fahari Creative',
         ],
     ];
 

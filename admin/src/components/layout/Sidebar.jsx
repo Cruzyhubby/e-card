@@ -17,6 +17,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import Brand from '../Brand';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_LABELS } from '../../lib/constants';
 import { avatarGradient, cn, initials } from '../../lib/utils';
@@ -38,21 +39,6 @@ const NAV_BY_ROLE = {
     { to: '/settings', label: 'Settings', icon: Settings },
   ],
 };
-
-function Brand() {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-400 via-accent-500 to-fuchsia-600 shadow-[0_10px_30px_-8px_rgba(139,92,246,0.8)]">
-        <span className="font-serif text-2xl leading-none text-white">É</span>
-        <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-ink-950 bg-gold" />
-      </div>
-      <div>
-        <p className="font-serif text-[26px] leading-none tracking-tight text-white">Éclat</p>
-        <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.3em] text-slate-500">Event suite</p>
-      </div>
-    </div>
-  );
-}
 
 function NavItem({ item, onNavigate }) {
   const Icon = item.icon;
@@ -97,7 +83,7 @@ export default function Sidebar({ open, onClose }) {
   const isSuperAdmin = role === 'super_admin';
   const navItems = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.organizer;
   const WorkspaceIcon = isSuperAdmin ? ShieldCheck : CalendarDays;
-  const workspaceTitle = isSuperAdmin ? 'Éclat platform' : `${user?.name?.split(' ')[0] || 'Organizer'}'s workspace`;
+  const workspaceTitle = isSuperAdmin ? 'Fahari platform' : `${user?.name?.split(' ')[0] || 'Organizer'}'s workspace`;
   const workspaceSubtitle = isSuperAdmin ? 'Super admin · global scope' : 'Organizer workspace';
 
   const content = (

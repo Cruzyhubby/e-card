@@ -36,6 +36,6 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@eclat.app'),
-        'name' => env('MAIL_FROM_NAME', 'Éclat'),
+        'name' => env('MAIL_FROM_NAME', 'Fahari'),
     ],
 ];

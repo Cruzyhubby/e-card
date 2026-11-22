@@ -78,7 +78,7 @@ export function AuthProvider({ children }) {
         localStorage.removeItem(USER_KEY);
       }
       throw new Error(
-        'This is an usher account. Sign in with the Éclat Gate scanner app on your phone — the web console is for organizers and admins.',
+        'This is an usher account. Sign in with the Fahari Gate scanner app on your phone — the web console is for organizers and admins.',
       );
     }
 
