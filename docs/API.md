@@ -266,10 +266,10 @@ Cascades guests and logs. Response `204`.
 ```
 
 ### POST `/api/events/{event}/send` (auth)
-Body: `{ "channel": "whatsapp" | "email", "guest_ids": [1,2] }`
+Body: `{ "channel": "whatsapp" | "sms" | "email", "guest_ids": [1,2] }`
 `guest_ids` optional; omitted means every guest whose status is `pending`.
-Response `200`: `{ "sent": 12, "skipped": 0, "event": Event }`
-Sets guest status to `sent` (never downgrades `checked_in`), sets event `invitation_status` to `live`, writes dispatch audit rows.
+Response `200`: `{ "sent": 12, "skipped": 0, "failed": 0, "errors": [], "event": Event }`
+`skipped` counts cancelled guests and guests missing the channel's contact detail. `failed` counts provider rejections; `errors` carries up to three provider messages. Sets guest status to `sent` (never downgrades `checked_in`), sets event `invitation_status` to `live`, writes dispatch audit rows.
 
 ## Guests
 

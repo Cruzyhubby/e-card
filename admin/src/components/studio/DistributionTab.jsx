@@ -128,10 +128,19 @@ export default function DistributionTab({ event, guests, onChanged }) {
         audience === 'vip' ? targets.map((guest) => guest.id) : null,
         template,
       );
-      toast.success(
-        `${result.sent} invitation${result.sent === 1 ? '' : 's'} dispatched`,
-        result.skipped ? `${result.skipped} guests were skipped.` : `Sent via ${channelMeta.label}.`,
-      );
+      const failed = result.failed ?? 0;
+
+      if (failed > 0) {
+        toast.error(
+          `${failed} invitation${failed === 1 ? '' : 's'} failed`,
+          result.errors?.[0] || `${result.sent} sent, ${result.skipped} skipped.`,
+        );
+      } else {
+        toast.success(
+          `${result.sent} invitation${result.sent === 1 ? '' : 's'} dispatched`,
+          result.skipped ? `${result.skipped} guests were skipped.` : `Sent via ${channelMeta.label}.`,
+        );
+      }
       setConfirmOpen(false);
       await onChanged?.();
     } catch (apiError) {

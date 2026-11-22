@@ -29,7 +29,7 @@ class MessagingService
      * Dispatch invitations for an event.
      *
      * @param  list<int>|null  $guestIds
-     * @return array{sent: int, skipped: int, event: Event}
+     * @return array{sent: int, skipped: int, failed: int, errors: list<string>, event: Event}
      */
     public function dispatchToEvent(Event $event, string $channel, ?array $guestIds = null, ?string $template = null): array
     {
@@ -43,6 +43,8 @@ class MessagingService
 
         $sent = 0;
         $skipped = 0;
+        $failed = 0;
+        $errors = [];
 
         foreach ($query->orderBy('name')->get() as $guest) {
             if ($guest->status === 'cancelled' || $this->recipient($guest, $channel) === null) {
@@ -53,7 +55,17 @@ class MessagingService
 
             $result = $this->sendToGuest($event, $guest, $channel, $template);
 
-            $result['sent'] ? $sent++ : $skipped++;
+            if ($result['sent']) {
+                $sent++;
+
+                continue;
+            }
+
+            $failed++;
+
+            if ($result['error'] !== null && ! in_array($result['error'], $errors, true)) {
+                $errors[] = $result['error'];
+            }
         }
 
         if ($sent > 0 && $event->invitation_status !== 'live') {
@@ -63,6 +75,8 @@ class MessagingService
         return [
             'sent' => $sent,
             'skipped' => $skipped,
+            'failed' => $failed,
+            'errors' => array_slice($errors, 0, 3),
             'event' => $event->refresh()->loadGuestStats(),
         ];
     }

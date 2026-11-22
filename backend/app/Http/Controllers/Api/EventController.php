@@ -205,6 +205,8 @@ class EventController extends Controller
         return response()->json([
             'sent' => $result['sent'],
             'skipped' => $result['skipped'],
+            'failed' => $result['failed'],
+            'errors' => $result['errors'],
             'event' => new EventResource($result['event']),
         ]);
     }
