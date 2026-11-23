@@ -70,7 +70,7 @@ export const timeAgo = (value) => {
 };
 
 export const initials = (name = '') =>
-  name
+  String(name ?? '')
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
@@ -88,7 +88,7 @@ const AVATAR_PALETTES = [
 ];
 
 export const avatarGradient = (name = '') => {
-  const hash = [...name].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const hash = [...String(name ?? '')].reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return AVATAR_PALETTES[hash % AVATAR_PALETTES.length];
 };
 

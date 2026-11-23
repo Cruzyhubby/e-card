@@ -207,7 +207,7 @@ export default function UsherShiftsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2.5">
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-[10px] font-bold text-slate-300">
-                            {initials(shift.operator?.name) || 'GT'}
+                            {shift.operator?.name ? initials(shift.operator.name) : 'GT'}
                           </span>
                           <div className="min-w-0">
                             <p className={cn('truncate text-xs font-semibold', shift.operator?.name ? 'text-slate-200' : 'text-slate-500')}>
