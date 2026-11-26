@@ -1,22 +1,14 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   CheckCircle2,
-  Copy,
-  Database,
   KeyRound,
   LogOut,
-  Mail,
-  MessageCircle,
-  RefreshCw,
   Save,
-  ScanLine,
   Server,
   ShieldCheck,
   SlidersHorizontal,
-  Smartphone,
-  Terminal,
-  Wifi,
-  WifiOff,
+  UserRound,
 } from 'lucide-react';
 import TwoFactorCard from '../components/TwoFactorCard';
 import Badge from '../components/ui/Badge';
@@ -58,23 +50,57 @@ function Section({ icon: Icon, title, description, children, action }) {
   );
 }
 
-function CodeBlock({ children }) {
-  return (
-    <pre className="overflow-x-auto rounded-xl border border-white/[0.07] bg-ink-950/70 p-3.5 font-mono text-[10px] leading-relaxed text-slate-300">
-      {children}
-    </pre>
-  );
-}
-
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateAccount } = useAuth();
   const toast = useToast();
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState(null);
+  const [accountForm, setAccountForm] = useState({ name: '', email: '', phone: '' });
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountError, setAccountError] = useState('');
   const [preferences, setPreferences] = useState(null);
   const [prefDraft, setPrefDraft] = useState({});
   const [prefLoading, setPrefLoading] = useState(true);
   const [prefSaving, setPrefSaving] = useState(false);
+
+  useEffect(() => {
+    setAccountForm({
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+      phone: user?.phone ?? '',
+    });
+  }, [user?.name, user?.email, user?.phone]);
+
+  const accountDirty =
+    accountForm.name.trim() !== (user?.name ?? '') ||
+    accountForm.email.trim().toLowerCase() !== (user?.email ?? '') ||
+    accountForm.phone.trim() !== (user?.phone ?? '');
+
+  const setAccountField = (key) => (changeEvent) => {
+    setAccountForm((current) => ({ ...current, [key]: changeEvent.target.value }));
+    setAccountError('');
+  };
+
+  const saveAccount = async (submitEvent) => {
+    submitEvent.preventDefault();
+    setAccountSaving(true);
+    setAccountError('');
+    try {
+      const nextUser = await updateAccount({
+        name: accountForm.name.trim(),
+        email: accountForm.email.trim(),
+        phone: accountForm.phone.trim(),
+      });
+      setAccountForm({
+        name: nextUser?.name ?? '',
+        email: nextUser?.email ?? '',
+        phone: nextUser?.phone ?? '',
+      });
+      toast.success('Account updated', 'Your details are saved and used for future sign-ins.');
+    } catch (apiError) {
+      setAccountError(apiError.message || 'Unable to save your account.');
+    } finally {
+      setAccountSaving(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -109,34 +135,6 @@ export default function SettingsPage() {
     }
   };
 
-  const envBase = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '').replace(/\/api$/, '');
-  const apiBase = envBase ? `${envBase}/api` : `${window.location.origin}/api`;
-
-  const copy = async (value, label) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      toast.success('Copied to clipboard', label);
-    } catch {
-      toast.error('Copy failed', 'Select the text and copy it manually.');
-    }
-  };
-
-  const testConnection = async () => {
-    setTesting(true);
-    setTestResult(null);
-    try {
-      const payload = await api.dashboard.get();
-      const eventCount = payload?.metrics?.total_events ?? '—';
-      setTestResult({ ok: true, detail: `Authenticated · ${eventCount} events visible` });
-      toast.success('API connection healthy', 'Authentication and data access are working.');
-    } catch (apiError) {
-      setTestResult({ ok: false, detail: apiError.message });
-      toast.error('Connection failed', apiError.message);
-    } finally {
-      setTesting(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <section>
@@ -145,12 +143,98 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-          Account, API connectivity, gate scanner pairing, and delivery providers.
+          Your account details, password, two-factor authentication, and event defaults. API, scanner, and delivery
+          services are managed by the platform admin.
         </p>
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
         <div className="space-y-5">
+          <Section
+            icon={UserRound}
+            title="Account details"
+            description="The name, sign-in e-mail, and phone number attached to your organizer account."
+            action={
+              <button
+                type="submit"
+                form="account-form"
+                className="btn-primary shrink-0 !px-3 !py-2 text-[11px]"
+                disabled={accountSaving || !accountDirty}
+              >
+                <Save className="h-3.5 w-3.5" />
+                {accountSaving ? 'Saving…' : 'Save'}
+              </button>
+            }
+          >
+            <form id="account-form" onSubmit={saveAccount} className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Full name" htmlFor="account-name" required>
+                  <Input
+                    id="account-name"
+                    value={accountForm.name}
+                    onChange={setAccountField('name')}
+                    autoComplete="name"
+                    placeholder="Your name"
+                    required
+                    maxLength={100}
+                  />
+                </Field>
+                <Field label="Phone number" htmlFor="account-phone" hint="Optional. Only visible to you and the platform admin.">
+                  <Input
+                    id="account-phone"
+                    type="tel"
+                    value={accountForm.phone}
+                    onChange={setAccountField('phone')}
+                    autoComplete="tel"
+                    placeholder="+255 …"
+                    maxLength={32}
+                  />
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field
+                    label="Sign-in e-mail"
+                    htmlFor="account-email"
+                    hint="Used together with your password to sign in."
+                    required
+                  >
+                    <Input
+                      id="account-email"
+                      type="email"
+                      value={accountForm.email}
+                      onChange={setAccountField('email')}
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      required
+                      maxLength={255}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {accountError ? (
+                <p className="rounded-xl border border-rose-400/25 bg-rose-500/10 px-3.5 py-2.5 text-xs text-rose-200">
+                  {accountError}
+                </p>
+              ) : null}
+
+              <div className="flex flex-col gap-3 border-t border-white/[0.06] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-2.5">
+                  <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                  <div>
+                    <p className="text-xs font-semibold text-slate-200">Password</p>
+                    <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">
+                      Changing your password asks for the current one first.
+                    </p>
+                  </div>
+                </div>
+                <Link to="/change-password" className="btn-secondary shrink-0 !px-3 !py-2 text-[11px]">
+                  <KeyRound className="h-3.5 w-3.5" />
+                  Change password
+                </Link>
+              </div>
+            </form>
+          </Section>
+
           {preferences?.groups?.length ? (
             <Section
               icon={SlidersHorizontal}
@@ -240,158 +324,42 @@ export default function SettingsPage() {
 
           <Section
             icon={Server}
-            title="API connection"
-            description="The dashboard talks to the Laravel REST API using Sanctum bearer tokens."
-            action={
-              <Badge tone="emerald" dot pulse>
-                Live
-              </Badge>
-            }
-          >
-            <div className="space-y-3">
-              <div className="flex flex-col gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-[0.12em] text-slate-600">Base URL</p>
-                  <p className="mt-0.5 truncate font-mono text-xs text-slate-300">{apiBase}</p>
-                </div>
-                <button type="button" onClick={() => copy(apiBase, 'API base URL')} className="btn-secondary shrink-0 !px-2.5 !py-2 text-[11px]">
-                  <Copy className="h-3.5 w-3.5" />
-                  Copy
-                </button>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
-                  <p className="text-[10px] uppercase tracking-[0.12em] text-slate-600">Authentication</p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
-                    <KeyRound className="h-3.5 w-3.5 text-slate-500" />
-                    Laravel Sanctum
-                  </p>
-                </div>
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
-                  <p className="text-[10px] uppercase tracking-[0.12em] text-slate-600">Database</p>
-                  <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-300">
-                    <Database className="h-3.5 w-3.5 text-slate-500" />
-                    Supabase Postgres · relational
-                  </p>
-                </div>
-              </div>
-
-              {testResult ? (
-                <div
-                  className={cn(
-                    'flex items-center gap-2 rounded-xl border px-3.5 py-3 text-xs',
-                    testResult.ok
-                      ? 'border-emerald-400/20 bg-emerald-500/[0.07] text-emerald-200'
-                      : 'border-rose-400/20 bg-rose-500/[0.07] text-rose-200',
-                  )}
-                >
-                  {testResult.ok ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-                  <span className="min-w-0 break-words">{testResult.detail}</span>
-                </div>
-              ) : null}
-
-              <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={testConnection} className="btn-primary" disabled={testing}>
-                  <RefreshCw className={cn('h-4 w-4', testing && 'animate-spin')} />
-                  {testing ? 'Testing…' : 'Test connection'}
-                </button>
-              </div>
-            </div>
-          </Section>
-
-          <Section
-            icon={ScanLine}
-            title="Usher gate scanner"
-            description="Create usher accounts and sign in to the Expo scanner for live QR verification."
-          >
-            <div className="space-y-4">
-              <div className="grid gap-2 sm:grid-cols-3">
-                {[
-                  { step: '01', title: 'Create account', text: 'Open an event → Gate & ushers.' },
-                  { step: '02', title: 'Sign in', text: 'Usher enters the gate label and password. One active session per gate.' },
-                  { step: '03', title: 'Scan', text: 'Only that event’s guests can be verified.' },
-                ].map((item) => (
-                  <div key={item.step} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
-                    <p className="font-mono text-[10px] font-bold text-accent-300">{item.step}</p>
-                    <p className="mt-1.5 text-xs font-semibold text-slate-200">{item.title}</p>
-                    <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">{item.text}</p>
-                  </div>
-                ))}
-              </div>
-
-              <CodeBlock>{`cd usher-app
-npm install
-npx expo start`}</CodeBlock>
-
-              <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
-                <p className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-200">
-                  <Smartphone className="h-3.5 w-3.5 text-slate-500" />
-                  Connection is automatic
-                </p>
-                <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
-                  The scanner finds the API on its own (saved server, dev host, or localhost) and confirms it with{' '}
-                  <span className="font-mono text-slate-400">/api/ping</span>. Ushers never type a server URL or device
-                  ID. If the status says <span className="font-mono text-slate-400">No connection</span>, they check the
-                  venue Wi-Fi and tap <span className="font-mono text-slate-400">RETRY</span>; sign-in also reconnects
-                  automatically.
-                </p>
-                <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
-                  Deployed builds bake in <span className="font-mono text-slate-400">EXPO_PUBLIC_API_URL</span> (for
-                  example your HTTPS API domain) so no discovery is needed. Gate accounts are created per event from
-                  the <span className="font-mono text-slate-400">Gate &amp; ushers</span> tab with just a label and a
-                  password; each usher adds their own names, phone and e-mail at sign-in.
-                </p>
-              </div>
-            </div>
-          </Section>
-
-          <Section
-            icon={MessageCircle}
-            title="Messaging providers"
-            description="Invitations are delivered server-side through WhatsApp Cloud API or SMTP."
+            title="Managed by Fahari"
+            description="These services run centrally and are configured by the platform admin."
           >
             <div className="space-y-2">
-              <div className="flex items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-300">
-                  <MessageCircle className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-slate-200">WhatsApp Cloud API</p>
-                    <Badge tone="slate">Server-side</Badge>
+              {[
+                {
+                  title: 'API connection',
+                  text: 'Hosting, database, and authentication are provisioned and monitored for you.',
+                },
+                {
+                  title: 'Usher gate scanner',
+                  text: 'Scanner builds and connection details are handled by the platform admin.',
+                },
+                {
+                  title: 'Messaging providers',
+                  text: 'WhatsApp, SMS, and email delivery credentials are configured once for every organizer.',
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="flex items-start justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-200">{item.title}</p>
+                    <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">{item.text}</p>
                   </div>
-                  <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">
-                    Configure <span className="font-mono">WHATSAPP_TOKEN</span> and{' '}
-                    <span className="font-mono">WHATSAPP_PHONE_NUMBER_ID</span> in the Laravel <span className="font-mono">.env</span>.
-                  </p>
+                  <Badge tone="slate">Admin</Badge>
                 </div>
-              </div>
-              <div className="flex items-start gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-sky-300">
-                  <Mail className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-slate-200">Transactional email</p>
-                    <Badge tone="slate">SMTP</Badge>
-                  </div>
-                  <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">
-                    Set <span className="font-mono">MAIL_MAILER</span>, <span className="font-mono">MAIL_HOST</span>, and credentials.
-                    The e-card is attached inline.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3">
-                <Terminal className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-600" />
-                <p className="text-[10px] leading-relaxed text-slate-500">
-                  For local development the backend defaults to{' '}
-                  <span className="font-mono text-slate-400">ECLAT_MESSAGING_DRIVER=log</span>, which records dispatches
-                  without contacting a provider.
-                </p>
-              </div>
+              ))}
+              <p className="px-1 pt-1 text-[10px] leading-relaxed text-slate-600">
+                Need a change? Ask the platform admin — organizers no longer edit connection or provider
+                credentials here.
+              </p>
             </div>
           </Section>
+
         </div>
 
         <div className="space-y-5">

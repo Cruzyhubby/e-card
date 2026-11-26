@@ -173,10 +173,8 @@ class MessagingService
     {
         $provider = trim((string) $this->platformValue('sms.provider', (string) config('services.sms.provider', 'kilakona')));
         $driver = $this->driver();
-        $apiKey = trim((string) $this->platformValue('sms.api_key', (string) config('services.sms.api_key', '')));
-        $apiSecret = trim((string) $this->platformValue('sms.api_secret', (string) config('services.sms.api_secret', '')));
 
-        if ($driver !== 'live' || $provider !== 'kilakona' || $apiKey === '' || $apiSecret === '') {
+        if ($driver !== 'live' || $provider === 'log' || $provider === '') {
             Log::info('SMS invitation dispatched through the log driver.', [
                 'event_id' => $event->id,
                 'guest_id' => $guest->id,
@@ -185,6 +183,18 @@ class MessagingService
             ]);
 
             return null;
+        }
+
+        return $this->deliverKilakonaSms($event, $guest, $recipient, $message);
+    }
+
+    private function deliverKilakonaSms(Event $event, Guest $guest, string $recipient, string $message): ?string
+    {
+        $apiKey = trim((string) $this->platformValue('sms.api_key', (string) config('services.sms.api_key', '')));
+        $apiSecret = trim((string) $this->platformValue('sms.api_secret', (string) config('services.sms.api_secret', '')));
+
+        if ($apiKey === '' || $apiSecret === '') {
+            throw new RuntimeException('Kilakona API key and secret are not configured.');
         }
 
         $countryCode = trim((string) $this->settings->get('sms.country_code', (string) config('services.sms.country_code', '255')));
@@ -238,14 +248,8 @@ class MessagingService
     private function deliverWhatsApp(Event $event, Guest $guest, string $recipient, string $message): ?string
     {
         $driver = $this->driver();
-        $token = $this->platformValue('whatsapp.token', (string) config('services.whatsapp.token'));
-        $phoneNumberId = $this->platformValue('whatsapp.phone_number_id', (string) config('services.whatsapp.phone_number_id'));
 
-        if (
-            $driver !== 'live'
-            || $token === ''
-            || $phoneNumberId === ''
-        ) {
+        if ($driver !== 'live') {
             Log::info('WhatsApp invitation dispatched through the log driver.', [
                 'event_id' => $event->id,
                 'guest_id' => $guest->id,
@@ -256,7 +260,22 @@ class MessagingService
             return null;
         }
 
-        $phone = $this->normalizePhone($recipient);
+        $token = $this->platformValue('whatsapp.token', (string) config('services.whatsapp.token'));
+        $phoneNumberId = $this->platformValue('whatsapp.phone_number_id', (string) config('services.whatsapp.phone_number_id'));
+
+        if ($token === '' || $phoneNumberId === '') {
+            Log::info('WhatsApp invitation dispatched through the log driver.', [
+                'event_id' => $event->id,
+                'guest_id' => $guest->id,
+                'to' => $recipient,
+                'message' => $message,
+            ]);
+
+            return null;
+        }
+
+        $countryCode = trim((string) $this->settings->get('sms.country_code', (string) config('services.sms.country_code', '255')));
+        $phone = $this->normalizeWithCountryCode($recipient, $countryCode !== '' ? $countryCode : '255');
 
         if ($phone === null) {
             throw new RuntimeException('Guest phone number cannot be used for WhatsApp.');
@@ -381,25 +400,6 @@ class MessagingService
         $value = trim((string) ($channel === 'email' ? $guest->email : $guest->phone));
 
         return $value === '' ? null : $value;
-    }
-
-    private function normalizePhone(string $phone): ?string
-    {
-        $digits = preg_replace('/\D+/', '', $phone);
-
-        if (! is_string($digits) || $digits === '') {
-            return null;
-        }
-
-        if (str_starts_with($digits, '00')) {
-            $digits = substr($digits, 2);
-        }
-
-        if (str_starts_with($digits, '0')) {
-            $digits = '234'.substr($digits, 1);
-        }
-
-        return strlen($digits) >= 8 ? $digits : null;
     }
 
     private function normalizeWithCountryCode(string $phone, string $countryCode): ?string

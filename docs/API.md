@@ -318,7 +318,7 @@ Response `200`:
 Downloads the CSV import template with the accepted headers.
 
 ### POST `/api/guests/{guest}/send` (auth)
-Body: `{ "channel": "whatsapp" | "sms" | "email" }`. Response `200`: `{ "guest": Guest, "message": "Hi Ada, you're invited to ..." }`. SMS uses the Kilakona gateway configured in platform settings (`api_key` and `api_secret` headers, `senderId` + `contacts` body); the log driver records deliveries without contacting the provider.
+Body: `{ "channel": "whatsapp" | "sms" | "email" }`. Response `200`: `{ "guest": Guest, "message": "Hi Ada, you're invited to ..." }`. SMS uses Kilakona (`api_key` and `api_secret` headers, `senderId` + `contacts` body) and WhatsApp uses Meta Cloud API, both configured in platform settings. The log driver records deliveries without contacting a provider.
 
 ## E-cards & public invitations
 
@@ -637,5 +637,7 @@ Response `200`: `{ "data": [ AuditLog, ... ], "actions": ["auth.login", "usher.c
 AuditLog: `{ id, action, description, actor_id, actor_name, actor_role, subject_type, subject_id, ip_address, meta, created_at }`. Guest PII is never written to the audit trail.
 
 ### GET/PUT `/api/admin/settings`
-GET returns `{ "settings": { "groups": [ { "name": "WhatsApp gateway", "fields": [ { "key": "whatsapp.token", "label": "...", "type": "password", "secret": true, "options": null, "hint": "...", "default": null, "value": null, "has_value": true, "source": "database" } ] } ] } }`. Secret values are never returned (`value: null`, `has_value` tells whether one is stored). `delivery_mode` is `log` or `live`.
+GET returns `{ "settings": { "groups": [ { "name": "Meta Cloud API", "fields": [ { "key": "whatsapp.token", "label": "...", "type": "password", "secret": true, "options": null, "hint": "...", "default": null, "value": null, "has_value": true, "source": "database" } ] } ] } }`. Secret values are never returned (`value: null`, `has_value` tells whether one is stored). `delivery_mode` is `log` or `live`.
 PUT body: `{ "settings": { "whatsapp.token": "EAA...", "mail.password": null } }`. Only changed keys are needed. For a secret, an empty string keeps the stored value and `null` clears it; for non-secrets, an empty string restores the default. Secrets are encrypted at rest. Response: `{ settings, updated: ["key", ...] }`.
+
+Provider selection keys: `sms.provider` is `log` or `kilakona`; `whatsapp.provider` is `meta`. Kilakona SMS needs `sms.api_key` and `sms.api_secret` plus the shared `sms.sender_id`; WhatsApp needs `whatsapp.token` and `whatsapp.phone_number_id`.

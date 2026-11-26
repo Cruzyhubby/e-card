@@ -150,11 +150,11 @@ export default function Sidebar({ open, onClose }) {
               Create an usher account inside any event, then sign in to the Expo scanner with it.
             </p>
             <NavLink
-              to="/settings"
+              to="/ushers"
               onClick={onClose}
               className="mt-3 inline-flex items-center gap-1 text-[11px] font-semibold text-accent-300 transition hover:text-accent-200"
             >
-              Connection setup
+              Create gate accounts
               <ArrowUpRight className="h-3 w-3" />
             </NavLink>
           </div>

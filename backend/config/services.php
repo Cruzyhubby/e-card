@@ -19,6 +19,7 @@ return [
     ],
 
     'whatsapp' => [
+        'provider' => env('WHATSAPP_PROVIDER', 'meta'),
         'token' => env('WHATSAPP_TOKEN'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
         'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),

@@ -28,7 +28,7 @@ const CHANNELS = {
     iconClass: 'text-emerald-300',
     barClass: 'bg-emerald-400',
     badge: 'emerald',
-    note: 'Delivered through the WhatsApp Cloud API.',
+    note: 'Delivered through the WhatsApp provider configured by the platform admin.',
   },
   sms: {
     label: 'SMS',
@@ -37,7 +37,7 @@ const CHANNELS = {
     iconClass: 'text-amber-300',
     barClass: 'bg-amber-400',
     badge: 'amber',
-    note: 'Delivered through the Kilakona SMS gateway configured by the platform admin.',
+    note: 'Delivered through the SMS gateway configured by the platform admin.',
   },
   email: {
     label: 'Email',
